@@ -1,0 +1,65 @@
+# Node
+web/node_modules
+web/.vite
+
+# Python
+services/ai-service/.venv
+__pycache__
+*.pyc
+
+# Java/Maven
+**/target/
+**/.idea/
+**/.project
+**/.classpath
+**/.settings/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+**/.env
+
+# Unwanted system and user files
+.cargo/
+.chocolatey/
+.codeium/
+.config/
+.dbclient/
+.eclipse/
+.gitconfig
+.lesshst
+.m2/
+.p2/
+.rustup/
+.ssh/
+.vscode/
+.windsurf/
+AppData/
+Contacts/
+CrossDevice/
+Documents/
+Downloads/
+Favorites/
+IdeaProjects/
+Links/
+Music/
+NTUSER.DAT*
+OneDrive/
+Pictures/
+Saved Games/
+Searches/
+Videos/
+WPS Cloud Files/
+battery-report.html
+eclipse-workspace/
+eclipse/
+ntuser.*
+venv/
+*.lnk
+LUMORA/
+perfume/
+desktop.ini
