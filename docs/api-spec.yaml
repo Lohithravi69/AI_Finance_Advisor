@@ -1,0 +1,1223 @@
+openapi: 3.0.3
+info:
+  title: AI Finance Advisor API
+  description: |
+    Enterprise-grade API specification for AI-powered financial advisory platform.
+    
+    **Architecture:**
+    - **Gateway**: Routes and secures all requests
+    - **Finance Service**: Manages transactions, accounts, and financial data
+    - **AI Service**: Provides intelligent analysis and personalized advice
+    
+    **Security:** All endpoints (except /auth/login) require Bearer token authentication.
+  version: 1.0.0
+  contact:
+    name: AI Finance Advisor Team
+    email: support@aifinanceadvisor.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Development
+  - url: https://staging.aifinanceadvisor.com/api/v1
+    description: Staging Environment
+  - url: https://api.aifinanceadvisor.com/api/v1
+    description: Production
+
+tags:
+  - name: Authentication
+    description: User authentication and token management
+  - name: Finance
+    description: Transaction processing and financial data management
+  - name: AI
+    description: AI-powered analysis and advice generation
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ============================================================
+  # AUTHENTICATION ENDPOINTS
+  # ============================================================
+  
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive JWT access token
+      operationId: login
+      security: []  # No auth required for login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              validUser:
+                summary: Valid credentials
+                value:
+                  email: "user@example.com"
+                  password: "SecurePass123!"
+                  rememberMe: true
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    refreshToken: "rt_a8f2b9c4d1e3f5g7h9i0..."
+                    expiresIn: 3600
+                    user:
+                      id: "usr_123abc"
+                      email: "user@example.com"
+                      name: "John Doe"
+                      role: "user"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Generate new access token using refresh token
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Refresh token from login response
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate current access token
+      operationId: logout
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # ============================================================
+  # FINANCE ENDPOINTS
+  # ============================================================
+  
+  /finance/transaction:
+    post:
+      tags:
+        - Finance
+      summary: Create transaction
+      description: Record a new financial transaction (income or expense)
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+            examples:
+              expense:
+                summary: Expense transaction
+                value:
+                  type: "expense"
+                  category: "groceries"
+                  amount: 125.50
+                  currency: "USD"
+                  description: "Weekly grocery shopping"
+                  date: "2026-01-10T14:30:00Z"
+                  tags: ["food", "essentials"]
+              income:
+                summary: Income transaction
+                value:
+                  type: "income"
+                  category: "salary"
+                  amount: 5000.00
+                  currency: "USD"
+                  description: "Monthly salary"
+                  date: "2026-01-01T00:00:00Z"
+                  tags: ["recurring"]
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    get:
+      tags:
+        - Finance
+      summary: Get transactions
+      description: Retrieve user's transaction history with filtering and pagination
+      operationId: getTransactions
+      parameters:
+        - name: type
+          in: query
+          description: Filter by transaction type
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: Filter transactions from this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter transactions until this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /finance/transaction/{transactionId}:
+    get:
+      tags:
+        - Finance
+      summary: Get transaction by ID
+      description: Retrieve details of a specific transaction
+      operationId: getTransactionById
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: Unique transaction identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    put:
+      tags:
+        - Finance
+      summary: Update transaction
+      description: Modify an existing transaction
+      operationId: updateTransaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: Unique transaction identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '200':
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    delete:
+      tags:
+        - Finance
+      summary: Delete transaction
+      description: Remove a transaction from the system
+      operationId: deleteTransaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: Unique transaction identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Transaction deleted successfully"
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /finance/summary:
+    get:
+      tags:
+        - Finance
+      summary: Get financial summary
+      description: Retrieve comprehensive financial overview including income, expenses, balance, and trends
+      operationId: getFinancialSummary
+      parameters:
+        - name: period
+          in: query
+          description: Time period for summary
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all]
+            default: month
+        - name: startDate
+          in: query
+          description: Custom start date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Custom end date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Financial summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialSummary'
+              examples:
+                monthlySummary:
+                  value:
+                    period: "month"
+                    startDate: "2026-01-01T00:00:00Z"
+                    endDate: "2026-01-31T23:59:59Z"
+                    totalIncome: 5000.00
+                    totalExpenses: 3250.75
+                    netSavings: 1749.25
+                    savingsRate: 34.99
+                    currency: "USD"
+                    categoryBreakdown:
+                      - category: "groceries"
+                        amount: 450.00
+                        percentage: 13.85
+                        transactionCount: 8
+                      - category: "rent"
+                        amount: 1500.00
+                        percentage: 46.15
+                        transactionCount: 1
+                      - category: "utilities"
+                        amount: 200.00
+                        percentage: 6.15
+                        transactionCount: 3
+                    monthlyTrend:
+                      - month: "2025-12"
+                        income: 4800.00
+                        expenses: 3100.00
+                        savings: 1700.00
+                      - month: "2026-01"
+                        income: 5000.00
+                        expenses: 3250.75
+                        savings: 1749.25
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /finance/categories:
+    get:
+      tags:
+        - Finance
+      summary: Get transaction categories
+      description: Retrieve list of available transaction categories
+      operationId: getCategories
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  income:
+                    type: array
+                    items:
+                      type: string
+                    example: ["salary", "freelance", "investment", "business", "other"]
+                  expense:
+                    type: array
+                    items:
+                      type: string
+                    example: ["groceries", "rent", "utilities", "transportation", "healthcare", "entertainment", "shopping", "dining", "education", "other"]
+
+  # ============================================================
+  # AI ENDPOINTS
+  # ============================================================
+  
+  /ai/analyze:
+    post:
+      tags:
+        - AI
+      summary: Analyze financial data
+      description: Perform AI-powered analysis on user's financial patterns and spending behavior
+      operationId: analyzeFinancialData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequest'
+            examples:
+              spendingAnalysis:
+                summary: Spending pattern analysis
+                value:
+                  analysisType: "spending_pattern"
+                  period: "month"
+                  includeCategories: ["groceries", "dining", "entertainment"]
+              budgetAnalysis:
+                summary: Budget analysis
+                value:
+                  analysisType: "budget_health"
+                  period: "month"
+      responses:
+        '200':
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+              examples:
+                spendingPatternResult:
+                  value:
+                    analysisId: "ana_xyz789"
+                    timestamp: "2026-01-10T15:30:00Z"
+                    analysisType: "spending_pattern"
+                    insights:
+                      - type: "overspending"
+                        severity: "warning"
+                        category: "dining"
+                        message: "Dining expenses are 40% higher than average"
+                        currentAmount: 560.00
+                        averageAmount: 400.00
+                        percentageChange: 40.0
+                      - type: "trend"
+                        severity: "info"
+                        category: "groceries"
+                        message: "Grocery spending has increased for 3 consecutive months"
+                        trend: "increasing"
+                      - type: "anomaly"
+                        severity: "alert"
+                        category: "entertainment"
+                        message: "Unusual spike in entertainment spending detected"
+                        currentAmount: 450.00
+                        typicalRange: [150, 250]
+                    summary: "Your spending patterns show increased activity in dining and entertainment. Consider reviewing discretionary expenses."
+                    confidence: 0.87
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ai/advice:
+    post:
+      tags:
+        - AI
+      summary: Get financial advice
+      description: Receive personalized AI-generated financial recommendations and action items
+      operationId: getFinancialAdvice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdviceRequest'
+            examples:
+              savingsAdvice:
+                summary: Savings optimization
+                value:
+                  adviceType: "savings_optimization"
+                  context:
+                    monthlyIncome: 5000.00
+                    currentSavingsRate: 20.0
+                    financialGoals: ["emergency_fund", "retirement"]
+              debtAdvice:
+                summary: Debt management
+                value:
+                  adviceType: "debt_management"
+                  context:
+                    totalDebt: 15000.00
+                    monthlyPayment: 500.00
+                    interestRate: 18.5
+      responses:
+        '200':
+          description: Advice generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdviceResponse'
+              examples:
+                savingsRecommendation:
+                  value:
+                    adviceId: "adv_abc456"
+                    timestamp: "2026-01-10T15:35:00Z"
+                    adviceType: "savings_optimization"
+                    recommendations:
+                      - priority: "high"
+                        category: "emergency_fund"
+                        title: "Build Emergency Fund"
+                        description: "You should aim to save 3-6 months of expenses ($9,000-$18,000) as an emergency fund."
+                        currentStatus: "In Progress"
+                        targetAmount: 12000.00
+                        currentAmount: 4500.00
+                        actionItems:
+                          - "Set up automatic transfer of $300/month to savings"
+                          - "Reduce dining expenses by 25% to free up extra $140/month"
+                          - "Consider high-yield savings account (current rate: 4.5%)"
+                      - priority: "medium"
+                        category: "retirement"
+                        title: "Increase Retirement Contributions"
+                        description: "At your current savings rate, you're projected to have a $450K shortfall at retirement."
+                        actionItems:
+                          - "Increase 401(k) contribution from 6% to 10%"
+                          - "Max out employer match ($250/month additional)"
+                          - "Open Roth IRA for additional tax-advantaged savings"
+                    estimatedImpact:
+                      monthlySavingsIncrease: 440.00
+                      annualSavingsIncrease: 5280.00
+                      projectedNetWorth10Years: 125000.00
+                    confidence: 0.92
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ai/chat:
+    post:
+      tags:
+        - AI
+      summary: Chat with AI advisor
+      description: Interactive conversation with AI financial advisor
+      operationId: chatWithAdvisor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: User's question or message
+                  example: "How can I reduce my monthly expenses?"
+                conversationId:
+                  type: string
+                  description: ID to maintain conversation context
+                  example: "conv_123xyz"
+      responses:
+        '200':
+          description: AI response generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversationId:
+                    type: string
+                    example: "conv_123xyz"
+                  response:
+                    type: string
+                    example: "Based on your spending patterns, I've identified three key areas where you can reduce expenses..."
+                  suggestedActions:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Review dining expenses", "Compare insurance rates", "Cancel unused subscriptions"]
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+# ============================================================
+# COMPONENTS
+# ============================================================
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  schemas:
+    # Authentication Schemas
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: User's password (min 8 characters)
+          example: "SecurePass123!"
+        rememberMe:
+          type: boolean
+          description: Extended session duration
+          default: false
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Token for refreshing access token
+          example: "rt_a8f2b9c4d1e3f5g7h9i0..."
+        expiresIn:
+          type: integer
+          description: Token expiration time in seconds
+          example: 3600
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+          example: "usr_123abc"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        role:
+          type: string
+          enum: [user, admin]
+          example: "user"
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+
+    # Finance Schemas
+    TransactionRequest:
+      type: object
+      required:
+        - type
+        - category
+        - amount
+        - currency
+        - date
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+          description: Transaction type
+          example: "expense"
+        category:
+          type: string
+          description: Transaction category
+          example: "groceries"
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Transaction amount
+          example: 125.50
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 currency code
+          example: "USD"
+        description:
+          type: string
+          maxLength: 500
+          description: Transaction description
+          example: "Weekly grocery shopping"
+        date:
+          type: string
+          format: date-time
+          description: Transaction date (ISO 8601)
+          example: "2026-01-10T14:30:00Z"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Custom tags for categorization
+          example: ["food", "essentials"]
+        metadata:
+          type: object
+          description: Additional custom data
+          additionalProperties: true
+
+    TransactionResponse:
+      allOf:
+        - $ref: '#/components/schemas/TransactionRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: Unique transaction identifier
+              example: "txn_789def"
+            userId:
+              type: string
+              description: Owner user ID
+              example: "usr_123abc"
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    TransactionListResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        summary:
+          type: object
+          properties:
+            totalIncome:
+              type: number
+              format: double
+            totalExpenses:
+              type: number
+              format: double
+            netAmount:
+              type: number
+              format: double
+
+    FinancialSummary:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [week, month, quarter, year, all]
+          example: "month"
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        totalIncome:
+          type: number
+          format: double
+          example: 5000.00
+        totalExpenses:
+          type: number
+          format: double
+          example: 3250.75
+        netSavings:
+          type: number
+          format: double
+          example: 1749.25
+        savingsRate:
+          type: number
+          format: double
+          description: Percentage of income saved
+          example: 34.99
+        currency:
+          type: string
+          example: "USD"
+        categoryBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              amount:
+                type: number
+                format: double
+              percentage:
+                type: number
+                format: double
+              transactionCount:
+                type: integer
+        monthlyTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+                format: date
+              income:
+                type: number
+                format: double
+              expenses:
+                type: number
+                format: double
+              savings:
+                type: number
+                format: double
+
+    # AI Schemas
+    AnalysisRequest:
+      type: object
+      required:
+        - analysisType
+      properties:
+        analysisType:
+          type: string
+          enum: 
+            - spending_pattern
+            - budget_health
+            - savings_potential
+            - risk_assessment
+            - goal_progress
+          description: Type of analysis to perform
+          example: "spending_pattern"
+        period:
+          type: string
+          enum: [week, month, quarter, year]
+          default: month
+          description: Time period for analysis
+        includeCategories:
+          type: array
+          items:
+            type: string
+          description: Specific categories to analyze
+        customParameters:
+          type: object
+          description: Additional analysis parameters
+          additionalProperties: true
+
+    AnalysisResponse:
+      type: object
+      properties:
+        analysisId:
+          type: string
+          example: "ana_xyz789"
+        timestamp:
+          type: string
+          format: date-time
+        analysisType:
+          type: string
+          example: "spending_pattern"
+        insights:
+          type: array
+          items:
+            $ref: '#/components/schemas/Insight'
+        summary:
+          type: string
+          description: Natural language summary of findings
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Confidence score of the analysis
+
+    Insight:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [overspending, underspending, trend, anomaly, opportunity, risk]
+          example: "overspending"
+        severity:
+          type: string
+          enum: [info, warning, alert, critical]
+          example: "warning"
+        category:
+          type: string
+          example: "dining"
+        message:
+          type: string
+          description: Human-readable insight description
+        currentAmount:
+          type: number
+          format: double
+        averageAmount:
+          type: number
+          format: double
+        percentageChange:
+          type: number
+          format: double
+        trend:
+          type: string
+          enum: [increasing, decreasing, stable, volatile]
+        metadata:
+          type: object
+          additionalProperties: true
+
+    AdviceRequest:
+      type: object
+      required:
+        - adviceType
+      properties:
+        adviceType:
+          type: string
+          enum:
+            - savings_optimization
+            - debt_management
+            - investment_strategy
+            - budget_creation
+            - expense_reduction
+            - income_growth
+          description: Type of advice requested
+          example: "savings_optimization"
+        context:
+          type: object
+          description: User context for personalized advice
+          properties:
+            monthlyIncome:
+              type: number
+              format: double
+            currentSavingsRate:
+              type: number
+              format: double
+            totalDebt:
+              type: number
+              format: double
+            financialGoals:
+              type: array
+              items:
+                type: string
+          additionalProperties: true
+
+    AdviceResponse:
+      type: object
+      properties:
+        adviceId:
+          type: string
+          example: "adv_abc456"
+        timestamp:
+          type: string
+          format: date-time
+        adviceType:
+          type: string
+          example: "savings_optimization"
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+        estimatedImpact:
+          type: object
+          properties:
+            monthlySavingsIncrease:
+              type: number
+              format: double
+            annualSavingsIncrease:
+              type: number
+              format: double
+            projectedNetWorth10Years:
+              type: number
+              format: double
+          additionalProperties: true
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+
+    Recommendation:
+      type: object
+      properties:
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+          example: "high"
+        category:
+          type: string
+          example: "emergency_fund"
+        title:
+          type: string
+          example: "Build Emergency Fund"
+        description:
+          type: string
+          example: "You should aim to save 3-6 months of expenses"
+        currentStatus:
+          type: string
+          example: "In Progress"
+        targetAmount:
+          type: number
+          format: double
+        currentAmount:
+          type: number
+          format: double
+        actionItems:
+          type: array
+          items:
+            type: string
+          description: Concrete steps to implement recommendation
+        timeframe:
+          type: string
+          description: Suggested timeline
+          example: "6 months"
+
+    # Common Schemas
+    Pagination:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 5
+        pageSize:
+          type: integer
+          example: 20
+        totalItems:
+          type: integer
+          example: 97
+        hasNextPage:
+          type: boolean
+          example: true
+        hasPreviousPage:
+          type: boolean
+          example: false
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code for client handling
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Invalid transaction amount"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+              description: Unique request identifier for tracking
+              example: "req_abc123def"
+
+  responses:
+    BadRequestError:
+      description: Bad request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "BAD_REQUEST"
+              message: "Invalid request format"
+              timestamp: "2026-01-10T15:40:00Z"
+              requestId: "req_abc123"
+
+    UnauthorizedError:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "UNAUTHORIZED"
+              message: "Invalid or expired authentication token"
+              timestamp: "2026-01-10T15:40:00Z"
+              requestId: "req_abc124"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "NOT_FOUND"
+              message: "Requested resource does not exist"
+              timestamp: "2026-01-10T15:40:00Z"
+              requestId: "req_abc125"
+
+    ValidationError:
+      description: Validation error - Invalid field values
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Request validation failed"
+              details:
+                - field: "amount"
+                  message: "Amount must be greater than 0"
+                - field: "email"
+                  message: "Invalid email format"
+              timestamp: "2026-01-10T15:40:00Z"
+              requestId: "req_abc126"
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "RATE_LIMIT_EXCEEDED"
+              message: "Too many requests. Please try again later."
+              timestamp: "2026-01-10T15:40:00Z"
+              requestId: "req_abc127"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "INTERNAL_SERVER_ERROR"
+              message: "An unexpected error occurred. Please try again later."
+              timestamp: "2026-01-10T15:40:00Z"
+              requestId: "req_abc128"
