@@ -22,6 +22,9 @@ public class Transaction {
     private User user;
 
     @Column(nullable = false)
+    private String type; // INCOME or EXPENSE
+
+    @Column(nullable = false)
     private String description;
 
     @Column(nullable = false)
@@ -37,8 +40,17 @@ public class Transaction {
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
