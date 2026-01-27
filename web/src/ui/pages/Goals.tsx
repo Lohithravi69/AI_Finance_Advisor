@@ -16,7 +16,7 @@ export default function Goals() {
   useEffect(() => {
     fetch('/api/finance/api/goals')
       .then(r => r.json())
-      .then(setGoals)
+      .then(goals => setGoals(goals.map((g: any) => ({ ...g, name: g.title }))))
       .catch(() => setGoals([]))
   }, [])
 

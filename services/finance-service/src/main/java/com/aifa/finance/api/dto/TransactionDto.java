@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public record TransactionDto(
         Long id,
+        String type,
         String description,
         Double amount,
         LocalDate date,

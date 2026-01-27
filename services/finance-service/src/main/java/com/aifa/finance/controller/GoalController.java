@@ -46,11 +46,22 @@ public class GoalController {
         return ResponseEntity.ok(goal);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<GoalResponse> updateGoal(
+            @PathVariable Long id,
+            @RequestBody GoalRequest request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        String userId = extractUserIdFromToken(token);
+        GoalResponse response = goalService.updateGoal(id, request, userId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteGoal(
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        
+
         String userId = extractUserIdFromToken(token);
         goalService.deleteGoal(id, userId);
         return ResponseEntity.noContent().build();

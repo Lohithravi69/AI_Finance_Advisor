@@ -17,13 +17,13 @@
 ## 3. Integrate AI into Backend
 - [x] Update InsightsController to call AI service endpoints
 - [x] Add AI categorization call in TransactionService
-- [ ] Implement real analytics for insights (category spending, trends)
+- [x] Implement real analytics for insights (category spending, trends)
 
 ## 4. Add Goal CRUD Endpoints
 - [x] Create GoalService similar to TransactionService
 - [x] Add GoalController with create, read, update, delete endpoints
 - [x] Create GoalDto
-- [ ] Update frontend Goals page to use real data
+- [x] Update frontend Goals page to use real data
 
 ## 5. Test and Verify
 - [x] Run verify-build.ps1 to ensure builds (Maven needs to be installed for Java services)

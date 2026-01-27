@@ -16,8 +16,7 @@ spring:
       enabled: true
   flyway:
     enabled: false
-  profiles:
-    include: test
+    baseline-on-migrate: true
 
 server:
   port: 8081

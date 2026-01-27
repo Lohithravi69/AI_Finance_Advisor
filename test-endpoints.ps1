@@ -2,8 +2,23 @@
 
 # Test REST Endpoints for Finance Service
 
-$baseUrl = "http://localhost:8081/api"
-$token = "test-user"
+$baseUrl = "http://localhost:8080/api/finance/api"
+$keycloakUrl = "http://localhost:8888/realms/aifa/protocol/openid-connect/token"
+
+# Get JWT token from Keycloak
+Write-Host "Getting JWT token from Keycloak..." -ForegroundColor Yellow
+$tokenBody = "client_id=aifa-web&username=testuser&password=testpass&grant_type=password"
+try {
+    $tokenResponse = Invoke-WebRequest -Uri $keycloakUrl -Method POST -Body $tokenBody -ContentType "application/x-www-form-urlencoded"
+    $tokenData = $tokenResponse.Content | ConvertFrom-Json
+    $token = $tokenData.access_token
+    Write-Host "✓ Token obtained successfully" -ForegroundColor Green
+} catch {
+    Write-Host "✗ Failed to get token: $_" -ForegroundColor Red
+    Write-Host "Make sure Keycloak is running and testuser is created" -ForegroundColor Yellow
+    exit 1
+}
+
 $headers = @{"Authorization"="Bearer $token"}
 
 Write-Host "========== Finance Service REST Endpoints Test ==========" -ForegroundColor Cyan

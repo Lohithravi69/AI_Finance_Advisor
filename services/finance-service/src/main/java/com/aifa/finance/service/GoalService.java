@@ -94,6 +94,22 @@ public class GoalService {
         goalRepository.save(goal);
     }
 
+    public GoalResponse updateGoal(Long id, GoalRequest request, String userId) {
+        User user = ensureUserByString(userId);
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Goal not found"));
+        if (!goal.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+        goal.setTitle(request.getTitle());
+        goal.setDescription(request.getDescription());
+        goal.setTargetAmount(request.getTargetAmount());
+        goal.setCurrentAmount(request.getCurrentAmount());
+        goal.setDeadline(request.getDeadline());
+        Goal saved = goalRepository.save(goal);
+        return toResponse(saved);
+    }
+
     public void deleteGoal(Long id, String userId) {
         User user = ensureUserByString(userId);
         Goal goal = goalRepository.findById(id)

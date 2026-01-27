@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/insights")
@@ -31,7 +32,12 @@ public class InsightsController {
         // For real AI insights, we could call /advise or custom endpoint
 
         // Simple analysis: calculate category spending
-        Map<String, Double> categorySpend = Map.of();  // TODO: implement category analysis
+        Map<String, Double> categorySpend = transactions.stream()
+            .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) && t.getCategory() != null)
+            .collect(Collectors.groupingBy(
+                t -> t.getCategory(),
+                Collectors.summingDouble(t -> t.getAmount() != null ? t.getAmount() : 0.0)
+            ));
 
         // Call AI for advice
         try {
@@ -58,16 +64,40 @@ public class InsightsController {
             // fallback
         }
 
-        // Fallback insights
-        return List.of(
-            Map.of(
+        // Generate insights based on category spending
+        List<Map<String, String>> insights = new java.util.ArrayList<>();
+
+        if (!categorySpend.isEmpty()) {
+            // Find top spending category
+            var topCategory = categorySpend.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+
+            if (topCategory != null) {
+                insights.add(Map.of(
+                    "type", "spending",
+                    "message", "Your highest spending category is " + topCategory.getKey() + " with $" + String.format("%.2f", topCategory.getValue()) + "."
+                ));
+            }
+
+            // Calculate total expenses
+            double totalExpenses = categorySpend.values().stream().mapToDouble(Double::doubleValue).sum();
+            insights.add(Map.of(
+                "type", "summary",
+                "message", "Total expenses across categories: $" + String.format("%.2f", totalExpenses) + "."
+            ));
+        } else {
+            // Fallback if no categorized expenses
+            insights.add(Map.of(
                 "type", "overspend",
                 "message", "You overspent on dining by 18% this month."
-            ),
-            Map.of(
+            ));
+            insights.add(Map.of(
                 "type", "saving",
                 "message", "Consider automating a $200 transfer on payday."
-            )
-        );
+            ));
+        }
+
+        return insights;
     }
 }

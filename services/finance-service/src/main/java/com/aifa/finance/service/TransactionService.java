@@ -134,6 +134,7 @@ public class TransactionService {
     private TransactionDto toDto(Transaction t) {
         return new TransactionDto(
                 t.getId(),
+                t.getType(),
                 t.getDescription(),
                 t.getAmount(),
                 t.getTransactionDate(),
