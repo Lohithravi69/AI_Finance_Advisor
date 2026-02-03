@@ -10,6 +10,7 @@ import Goals from './ui/pages/Goals'
 import Chat from './ui/pages/Chat'
 import { LoginPage } from './pages/LoginPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { CategoriesPage } from './pages/CategoriesPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 const router = createBrowserRouter([
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'expenses', element: <ProtectedRoute><Expenses /></ProtectedRoute> },
       { path: 'goals', element: <ProtectedRoute><Goals /></ProtectedRoute> },
+      { path: 'categories', element: <ProtectedRoute><CategoriesPage /></ProtectedRoute> },
       { path: 'chat', element: <ProtectedRoute><Chat /></ProtectedRoute> },
     ]
   }
