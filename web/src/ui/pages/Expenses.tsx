@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import AddTransactionForm from '../components/AddTransactionForm'
 
 type Tx = { id: string; description: string; amount: number; date: string; merchant: string }
 
@@ -39,10 +41,28 @@ export default function Expenses() {
     return Object.entries(map)
   }, [items])
 
+  const refreshTransactions = () => {
+    fetch('/api/finance/api/transactions?limit=10')
+      .then(r => r.json())
+      .then(setItems)
+      .catch(() => setItems([]))
+  }
+
   return (
-    <div className="grid md:grid-cols-3 gap-4">
-      <div className="md:col-span-2 card p-5">
-        <div className="text-lg font-semibold mb-3">Timeline</div>
+    <>
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-lg font-semibold">Timeline</div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAddForm(true)}
+              className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition"
+            >
+              Add Transaction
+            </motion.button>
+          </div>
         <div className="timeline">
           {grouped.map(([date, list]) => (
             <div key={date} className="timeline-item">
@@ -76,5 +96,13 @@ export default function Expenses() {
         </div>
       </div>
     </div>
+
+    {showAddForm && (
+      <AddTransactionForm
+        onClose={() => setShowAddForm(false)}
+        onSuccess={refreshTransactions}
+      />
+    )}
+    </>
   )
 }

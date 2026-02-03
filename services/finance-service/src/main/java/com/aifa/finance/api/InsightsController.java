@@ -1,5 +1,6 @@
 package com.aifa.finance.api;
 
+import com.aifa.finance.api.dto.TransactionDto;
 import com.aifa.finance.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -7,7 +8,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,7 @@ import java.util.stream.Collectors;
 public class InsightsController {
 
     private final TransactionService transactionService;
-    private final RestClient aiClient = RestClient.builder()
-        .baseUrl("http://localhost:8001")  // AI service URL
-        .build();
+    // private final RestTemplate aiClient = new RestTemplate();
 
     @GetMapping
     public List<Map<String, String>> insights(@AuthenticationPrincipal Jwt jwt) {
@@ -33,24 +32,25 @@ public class InsightsController {
 
         // Simple analysis: calculate category spending
         Map<String, Double> categorySpend = transactions.stream()
-            .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) && t.getCategory() != null)
+            .filter(t -> t.category() != null)
             .collect(Collectors.groupingBy(
-                t -> t.getCategory(),
-                Collectors.summingDouble(t -> t.getAmount() != null ? t.getAmount() : 0.0)
+                TransactionDto::category,
+                Collectors.summingDouble(t -> t.amount() != null ? t.amount() : 0.0)
             ));
 
-        // Call AI for advice
+        // Call AI for advice - commented out for now
+        /*
         try {
-            var response = aiClient.post()
-                .uri("/advise")
-                .body(Map.of(
+            var response = aiClient.postForObject(
+                "http://localhost:8001/advise",
+                Map.of(
                     "income", 5000.0,  // hardcoded for demo
                     "fixed_expenses", 1200.0,
                     "variable_expenses", 1600.0,
                     "savings_goal", 10000.0
-                ))
-                .retrieve()
-                .body(Map.class);
+                ),
+                Map.class
+            );
 
             if (response != null) {
                 return List.of(
@@ -63,6 +63,7 @@ public class InsightsController {
         } catch (Exception e) {
             // fallback
         }
+        */
 
         // Generate insights based on category spending
         List<Map<String, String>> insights = new java.util.ArrayList<>();
