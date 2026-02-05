@@ -8,6 +8,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 from app.analyzer import FinancialAnalyzer
 from app.recommender import RecommendationEngine
+from app.predictive_analyzer import PredictiveAnalyzer
 from app.dto import (
     AnalysisType,
     AdviceType,
@@ -25,6 +26,7 @@ health_bp = Blueprint('health', __name__)
 # Initialize analyzers
 analyzer = FinancialAnalyzer()
 recommender = RecommendationEngine()
+predictive_analyzer = PredictiveAnalyzer()
 
 
 # ============================================================
@@ -141,7 +143,7 @@ def chat():
     """
     try:
         data = request.get_json()
-        
+
         if not data:
             return jsonify(ErrorDTO.create('BAD_REQUEST', 'Request body is required').to_dict()), 400
 
@@ -164,6 +166,127 @@ def chat():
 
     except Exception as e:
         logger.error(f"Chat error: {str(e)}", exc_info=True)
+        return jsonify(ErrorDTO.create('INTERNAL_SERVER_ERROR', str(e)).to_dict()), 500
+
+
+@ai_bp.route('/predict/cashflow', methods=['POST'])
+def predict_cash_flow():
+    """
+    POST /ai/predict/cashflow - Predict future cash flow
+    Advanced predictive analytics endpoint
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify(ErrorDTO.create('BAD_REQUEST', 'Request body is required').to_dict()), 400
+
+        transactions = data.get('transactions', [])
+        months_ahead = data.get('monthsAhead', 6)
+
+        if not transactions:
+            return jsonify(ErrorDTO.create('VALIDATION_ERROR', 'transactions are required').to_dict()), 422
+
+        # Generate predictions
+        predictions, metadata, confidence = predictive_analyzer.predict_cash_flow(
+            transactions, months_ahead
+        )
+
+        response = {
+            'prediction_id': f"pred_{uuid.uuid4().hex[:6]}",
+            'timestamp': datetime.now().isoformat() + 'Z',
+            'predictions': [pred.__dict__ for pred in predictions],
+            'metadata': metadata,
+            'confidence': confidence
+        }
+
+        logger.info(f"Cash flow prediction completed: {response['prediction_id']}")
+        return jsonify(response), 200
+
+    except Exception as e:
+        logger.error(f"Cash flow prediction error: {str(e)}", exc_info=True)
+        return jsonify(ErrorDTO.create('INTERNAL_SERVER_ERROR', str(e)).to_dict()), 500
+
+
+@ai_bp.route('/predict/risk', methods=['POST'])
+def assess_risk():
+    """
+    POST /ai/predict/risk - Assess financial risk profile
+    Comprehensive risk assessment endpoint
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify(ErrorDTO.create('BAD_REQUEST', 'Request body is required').to_dict()), 400
+
+        user_profile = data.get('userProfile', {})
+        transactions = data.get('transactions', [])
+
+        # Perform risk assessment
+        risk_assessment, insights, confidence = predictive_analyzer.assess_financial_risk(
+            user_profile, transactions
+        )
+
+        response = {
+            'assessment_id': f"risk_{uuid.uuid4().hex[:6]}",
+            'timestamp': datetime.now().isoformat() + 'Z',
+            'risk_assessment': {
+                'overall_risk_score': risk_assessment.overall_risk_score,
+                'risk_factors': risk_assessment.risk_factors,
+                'mitigation_strategies': risk_assessment.mitigation_strategies,
+                'confidence_level': risk_assessment.confidence_level
+            },
+            'insights': [insight.to_dict() for insight in insights],
+            'confidence': confidence
+        }
+
+        logger.info(f"Risk assessment completed: {response['assessment_id']}")
+        return jsonify(response), 200
+
+    except Exception as e:
+        logger.error(f"Risk assessment error: {str(e)}", exc_info=True)
+        return jsonify(ErrorDTO.create('INTERNAL_SERVER_ERROR', str(e)).to_dict()), 500
+
+
+@ai_bp.route('/predict/goals', methods=['POST'])
+def forecast_goals():
+    """
+    POST /ai/predict/goals - Forecast savings goal achievement
+    Goal forecasting with compound interest calculations
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify(ErrorDTO.create('BAD_REQUEST', 'Request body is required').to_dict()), 400
+
+        current_savings = data.get('currentSavings', 0)
+        monthly_contribution = data.get('monthlyContribution', 0)
+        target_amount = data.get('targetAmount', 0)
+        expected_return_rate = data.get('expectedReturnRate', 0.07)
+
+        if target_amount <= 0:
+            return jsonify(ErrorDTO.create('VALIDATION_ERROR', 'targetAmount must be greater than 0').to_dict()), 422
+
+        # Generate goal forecast
+        forecast_data, insights, confidence = predictive_analyzer.forecast_savings_goals(
+            current_savings, monthly_contribution, target_amount, expected_return_rate
+        )
+
+        response = {
+            'forecast_id': f"goal_{uuid.uuid4().hex[:6]}",
+            'timestamp': datetime.now().isoformat() + 'Z',
+            'forecast': forecast_data,
+            'insights': [insight.to_dict() for insight in insights],
+            'confidence': confidence
+        }
+
+        logger.info(f"Goal forecast completed: {response['forecast_id']}")
+        return jsonify(response), 200
+
+    except Exception as e:
+        logger.error(f"Goal forecasting error: {str(e)}", exc_info=True)
         return jsonify(ErrorDTO.create('INTERNAL_SERVER_ERROR', str(e)).to_dict()), 500
 
 
