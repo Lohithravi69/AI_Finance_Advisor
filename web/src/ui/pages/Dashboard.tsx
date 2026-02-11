@@ -12,6 +12,8 @@ interface DashboardData {
   savingsProgress: number
   spendingBreakdown: Array<{ name: string; value: number }>
   insights: Array<{ type: string; message: string }>
+  cashFlowForecast?: Array<{ date: string; predicted_balance: number; risk_level: string }>
+  riskScore?: number
 }
 
 export default function Dashboard() {
@@ -35,27 +37,17 @@ export default function Dashboard() {
       setLoading(true)
       setError(null)
 
-      const token = localStorage.getItem('access_token')
-      if (!token) {
-        setError('Authentication required. Please log in.')
-        return
-      }
-
-      // Fetch summary data
-      const summaryResponse = await fetch('/api/finance/api/summary', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      // Fetch summary data from backend API
+      const summaryResponse = await fetch('/api/finance/api/summary')
 
       if (!summaryResponse.ok) {
-        throw new Error('Failed to fetch summary data')
+        throw new Error(`Failed to fetch summary data: ${summaryResponse.status}`)
       }
 
       const summary = await summaryResponse.json()
 
       // Fetch recent transactions for spending breakdown
-      const transactionsResponse = await fetch('/api/finance/api/transactions?limit=50', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const transactionsResponse = await fetch('/api/finance/api/transactions?limit=50')
 
       let spendingBreakdown: Array<{ name: string; value: number }> = []
       if (transactionsResponse.ok) {
@@ -79,14 +71,13 @@ export default function Dashboard() {
       // Fetch AI insights
       let insights: Array<{ type: string; message: string }> = []
       try {
-        const insightsResponse = await fetch('/api/finance/api/insights', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        const insightsResponse = await fetch('/api/finance/api/insights')
 
         if (insightsResponse.ok) {
           insights = await insightsResponse.json()
         }
       } catch (insightsError) {
+        console.warn('AI insights service unavailable, using fallback insights')
         // Fallback insights if AI service is unavailable
         insights = [
           { type: 'info', message: 'Track your expenses regularly to maintain financial health.' },

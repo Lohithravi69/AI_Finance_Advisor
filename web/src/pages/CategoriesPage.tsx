@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuthStore } from '../../stores/authStore';
-import { CategoryList } from '../components/CategoryList';
-import { CategoryCard } from '../components/CategoryCard';
-import { CreateCategoryForm } from '../components/CreateCategoryForm';
-import { ExpenseBreakdown } from '../components/ExpenseBreakdown';
+import { useAuthStore } from '../stores/authStore';
+import { CategoryList } from '../ui/components/CategoryList';
+import { CreateCategoryForm } from '../ui/components/CreateCategoryForm';
+import { ExpenseBreakdown } from '../ui/components/ExpenseBreakdown';
 
 interface Category {
   id: number;

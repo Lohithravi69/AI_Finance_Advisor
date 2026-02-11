@@ -1,34 +1,24 @@
-# TODO: Enhance AI Finance Advisor to Meet Requirements
+# TODO: Implement AI Predictive Features (Option A)
 
-## 1. Upgrade AI Service with ML Models
-- [x] Install ML dependencies (scikit-learn, transformers for basic LLM)
-- [x] Implement ML-based categorization using Scikit-learn (train on sample data)
-- [x] Implement ML-based prediction (time series forecasting)
-- [x] Implement basic Transformer-based chat (use Hugging Face pipeline)
-- [x] Update /categorize, /predict, /advise, /chat endpoints to use ML
+## 1. Enhance AI Service with Predictive Models
+- [x] Implement cash flow forecasting using time series analysis (ARIMA/Prophet)
+- [x] Create risk assessment engine with financial risk scoring
+- [x] Add goal achievement prediction with compound interest calculations
+- [x] Update AI service endpoints for new predictive features
 
-## 2. Enhance UI/UX
-- [x] Change Dashboard pie chart to ring chart (D3.js or Recharts)
-- [x] Add glassmorphism effects (backdrop-blur, translucent backgrounds)
-- [x] Ensure dark/light mode toggle works (ThemeToggle component)
-- [x] Add privacy & security visuals to Onboarding (icons, explanations)
-- [x] Improve Expenses page with better filters and color-coding
+## 2. Update Finance Service Integration
+- [x] Add new endpoints in InsightsController for predictive features
+- [x] Update TransactionService to send data to AI service for predictions
+- [x] Add DTOs for predictive responses (CashFlowForecast, RiskAssessment, GoalPrediction)
 
-## 3. Integrate AI into Backend
-- [x] Update InsightsController to call AI service endpoints
-- [x] Add AI categorization call in TransactionService
-- [x] Implement real analytics for insights (category spending, trends)
+## 3. Enhance Frontend Dashboard
+- [ ] Add cash flow forecast chart to Dashboard
+- [ ] Display risk assessment score and recommendations
+- [ ] Show goal achievement timeline with predictions
+- [ ] Update AI Insights section with predictive data
 
-## 4. Add Goal CRUD Endpoints
-- [x] Create GoalService similar to TransactionService
-- [x] Add GoalController with create, read, update, delete endpoints
-- [x] Create GoalDto
-- [x] Update frontend Goals page to use real data
-
-## 5. Test and Verify
-- [x] Run verify-build.ps1 to ensure builds (Maven needs to be installed for Java services)
-- [x] Start all services and test endpoints (services can be started as per README)
-- [x] Verify AI ML models work (ML models trained and integrated)
-- [x] Check UI enhancements (ring chart, glassmorphism, privacy visuals added)
-- [x] Test Goal CRUD (backend and frontend implemented)
-- [x] Update documentation if needed (README updated with architecture)
+## 4. Test and Verify
+- [ ] Test AI service endpoints with sample data
+- [ ] Verify frontend displays predictive insights correctly
+- [ ] Run integration tests for end-to-end functionality
+- [ ] Update documentation with new features

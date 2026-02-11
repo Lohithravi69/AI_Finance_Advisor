@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+  # Infrastructure Services
   postgres:
     image: postgres:16-alpine
     container_name: aifa-postgres
@@ -17,6 +18,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - aifa-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
@@ -34,6 +37,8 @@ services:
       postgres:
         condition: service_healthy
     command: start-dev
+    networks:
+      - aifa-network
 
   mongo:
     image: mongodb/mongodb-community-server:7.0-ubuntu2204
@@ -42,6 +47,8 @@ services:
       - "27017:27017"
     volumes:
       - mongodata:/data/db
+    networks:
+      - aifa-network
 
   redis:
     image: redis:7-alpine
@@ -51,6 +58,84 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redisdata:/data
+    networks:
+      - aifa-network
+
+  # Application Services
+  finance-service:
+    build:
+      context: ./services/finance-service
+      dockerfile: Dockerfile
+    container_name: aifa-finance-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/aifinance
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/aifa
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - aifa-network
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile
+    container_name: aifa-ai-service
+    environment:
+      MONGODB_URL: mongodb://mongo:27017
+      REDIS_URL: redis://redis:6379
+      DATABASE_NAME: aifinance
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - aifa-network
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: aifa-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      FINANCE_SERVICE_URL: http://finance-service:8081
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - finance-service
+      - ai-service
+    networks:
+      - aifa-network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: aifa-web
+    ports:
+      - "80:80"
+    depends_on:
+      - gateway
+    networks:
+      - aifa-network
+    restart: unless-stopped
+
+networks:
+  aifa-network:
+    driver: bridge
 
 volumes:
   pgdata:
