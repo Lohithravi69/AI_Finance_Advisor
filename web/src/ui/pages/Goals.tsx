@@ -14,7 +14,7 @@ export default function Goals() {
   const [celebrate, setCelebrate] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/finance/api/goals')
+    fetch('/api/goals')
       .then(r => r.json())
       .then(goals => setGoals(goals.map((g: any) => ({ ...g, name: g.title }))))
       .catch(() => setGoals([]))
@@ -27,7 +27,7 @@ export default function Goals() {
     const newAmount = Math.max(0, currentAmount)
     const progress = (newAmount / goal.targetAmount) * 100
 
-    fetch(`/api/finance/api/goals/${id}`, {
+    fetch(`/api/goals/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...goal, currentAmount: newAmount })

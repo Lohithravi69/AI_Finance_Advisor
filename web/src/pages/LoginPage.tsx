@@ -9,34 +9,76 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const { login } = useAuthStore();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setIsLoading(true);
     setError('');
 
     try {
-      // In a real app with Keycloak, you would use:
-      // 1. Redirect to Keycloak login
-      // 2. Handle callback with authorization code
-      // 3. Exchange code for JWT token
+      // Production OAuth2 flow with Keycloak
+      const keycloakUrl = 'http://localhost:8888';
+      const realm = 'aifa';
+      const clientId = 'aifa-web';
+      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
 
-      // For demo purposes, we'll simulate a token
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      const mockUser = {
-        id: 1,
-        email: 'user@example.com',
-        fullName: 'John Doe',
-      };
+      // Generate state for CSRF protection
+      const state = btoa(JSON.stringify({
+        nonce: Math.random().toString(36).substring(2),
+        redirect: '/dashboard'
+      }));
 
-      // Store token and user
-      login(mockToken, mockUser);
-      toast.success('Login successful!');
-      navigate('/dashboard');
+      // Store state in sessionStorage
+      sessionStorage.setItem('oauth_state', state);
+
+      // Redirect to Keycloak login
+      const loginUrl = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${redirectUri}&` +
+        `response_type=code&` +
+        `scope=openid profile email&` +
+        `state=${encodeURIComponent(state)}`;
+
+      window.location.href = loginUrl;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
       toast.error(message);
-    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignup = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Production OAuth2 flow with Keycloak - registration
+      const keycloakUrl = 'http://localhost:8888';
+      const realm = 'aifa';
+      const clientId = 'aifa-web';
+      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
+
+      // Generate state for CSRF protection
+      const state = btoa(JSON.stringify({
+        nonce: Math.random().toString(36).substring(2),
+        redirect: '/dashboard'
+      }));
+
+      // Store state in sessionStorage
+      sessionStorage.setItem('oauth_state', state);
+
+      // Redirect to Keycloak registration
+      const signupUrl = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/registrations?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${redirectUri}&` +
+        `response_type=code&` +
+        `scope=openid profile email&` +
+        `state=${encodeURIComponent(state)}`;
+
+      window.location.href = signupUrl;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Signup failed';
+      setError(message);
+      toast.error(message);
       setIsLoading(false);
     }
   };
@@ -57,53 +99,39 @@ export const LoginPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-
+        <div className="space-y-4">
           <button
-            type="submit"
+            onClick={handleLogin}
             disabled={isLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
           >
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Redirecting...' : 'Login with Keycloak'}
           </button>
-        </form>
+
+          <button
+            onClick={handleSignup}
+            disabled={isLoading}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+          >
+            {isLoading ? 'Redirecting...' : 'Sign Up with Keycloak'}
+          </button>
+        </div>
 
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>
-            Demo mode: Click login with any email/password to proceed
+            Secure login powered by Keycloak OAuth2
           </p>
         </div>
 
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <div className="bg-blue-50 p-4 rounded-lg text-sm text-gray-700">
-            <p className="font-semibold mb-2">🔐 In Production:</p>
+          <div className="bg-green-50 p-4 rounded-lg text-sm text-gray-700">
+            <p className="font-semibold mb-2">✅ Production Features:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>OAuth2 via Keycloak</li>
-              <li>Secure token exchange</li>
-              <li>Session management</li>
+              <li>JWT token validation</li>
+              <li>Secure session management</li>
+              <li>Automatic token refresh</li>
+              <li>Protected API endpoints</li>
             </ul>
           </div>
         </div>

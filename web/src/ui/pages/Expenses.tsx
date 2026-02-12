@@ -23,13 +23,35 @@ const badge: Record<string,string> = {
 
 export default function Expenses() {
   const [items, setItems] = useState<Tx[]>([])
+  const [showAddForm, setShowAddForm] = useState(false)
 
   useEffect(() => {
-    fetch('/api/finance/api/transactions?limit=10')
-      .then(r => r.json())
-      .then(setItems)
-      .catch(() => setItems([]))
+    fetchTransactions()
   }, [])
+
+  const fetchTransactions = async () => {
+    try {
+      const response = await fetch('/api/transactions?limit=50')
+      if (response.ok) {
+        const data = await response.json()
+        // Transform API response to match our Tx type
+        const transformedItems: Tx[] = data.map((tx: any) => ({
+          id: tx.id.toString(),
+          description: tx.description || tx.merchant || 'Transaction',
+          amount: tx.amount || 0,
+          date: tx.date || new Date().toISOString(),
+          merchant: tx.merchant || tx.description || 'Unknown'
+        }))
+        setItems(transformedItems)
+      } else {
+        console.warn('Failed to fetch transactions, using empty list')
+        setItems([])
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error)
+      setItems([])
+    }
+  }
 
   const grouped = useMemo(() => {
     const map: Record<string, Tx[]> = {}
@@ -42,10 +64,7 @@ export default function Expenses() {
   }, [items])
 
   const refreshTransactions = () => {
-    fetch('/api/finance/api/transactions?limit=10')
-      .then(r => r.json())
-      .then(setItems)
-      .catch(() => setItems([]))
+    fetchTransactions()
   }
 
   return (

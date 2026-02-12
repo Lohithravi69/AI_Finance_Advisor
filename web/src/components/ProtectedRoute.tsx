@@ -7,8 +7,11 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  if (!isAuthenticated) {
+  
+  // Bypass authentication in development mode
+  const isDevelopment = import.meta.env.DEV;
+  
+  if (!isAuthenticated && !isDevelopment) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">

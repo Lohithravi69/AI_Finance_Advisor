@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
@@ -93,10 +94,10 @@ public class TransactionService {
                 .count();
         
         return FinancialSummaryResponse.builder()
-                .totalIncome(round(income))
-                .totalExpenses(round(expenses))
-                .netSavings(round(income - expenses))
-                .transactionCount(count)
+                .totalIncome(BigDecimal.valueOf(round(income)))
+                .totalExpenses(BigDecimal.valueOf(round(expenses)))
+                .netSavings(BigDecimal.valueOf(round(income - expenses)))
+                .transactionCount((long) count)
                 .period(yearMonth.toString())
                 .build();
     }
@@ -123,10 +124,10 @@ public class TransactionService {
                 .count();
         
         return FinancialSummaryResponse.builder()
-                .totalIncome(round(income))
-                .totalExpenses(round(expenses))
-                .netSavings(round(income - expenses))
-                .transactionCount(count)
+                .totalIncome(BigDecimal.valueOf(round(income)))
+                .totalExpenses(BigDecimal.valueOf(round(expenses)))
+                .netSavings(BigDecimal.valueOf(round(income - expenses)))
+                .transactionCount((long) count)
                 .period(String.valueOf(yearVal))
                 .build();
     }

@@ -34,46 +34,46 @@ export interface IncomeSourceResponse {
 
 export const incomeSourcesApi = {
   async createIncomeSource(userId: number, request: IncomeSourceRequest): Promise<IncomeSourceResponse> {
-    const response = await axios.post(`${API_BASE_URL}/api/income-sources?userId=${userId}`, request);
+    const response = await axios.post(`${API_BASE_URL}/income-sources?userId=${userId}`, request);
     return response.data;
   },
 
   async getIncomeSources(userId: number): Promise<IncomeSourceResponse[]> {
-    const response = await axios.get(`${API_BASE_URL}/api/income-sources?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/income-sources?userId=${userId}`);
     return response.data;
   },
 
   async getActiveIncomeSources(userId: number): Promise<IncomeSourceResponse[]> {
-    const response = await axios.get(`${API_BASE_URL}/api/income-sources/active?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/income-sources/active?userId=${userId}`);
     return response.data;
   },
 
   async getIncomeSourceById(id: number): Promise<IncomeSourceResponse> {
-    const response = await axios.get(`${API_BASE_URL}/api/income-sources/${id}`);
+    const response = await axios.get(`${API_BASE_URL}/income-sources/${id}`);
     return response.data;
   },
 
   async updateIncomeSource(id: number, request: IncomeSourceRequest): Promise<IncomeSourceResponse> {
-    const response = await axios.put(`${API_BASE_URL}/api/income-sources/${id}`, request);
+    const response = await axios.put(`${API_BASE_URL}/income-sources/${id}`, request);
     return response.data;
   },
 
   async deleteIncomeSource(id: number): Promise<void> {
-    await axios.delete(`${API_BASE_URL}/api/income-sources/${id}`);
+    await axios.delete(`${API_BASE_URL}/income-sources/${id}`);
   },
 
   async markAsReceived(id: number): Promise<IncomeSourceResponse> {
-    const response = await axios.post(`${API_BASE_URL}/api/income-sources/${id}/received`);
+    const response = await axios.post(`${API_BASE_URL}/income-sources/${id}/received`);
     return response.data;
   },
 
   async getTotalMonthlyIncome(userId: number): Promise<number> {
-    const response = await axios.get(`${API_BASE_URL}/api/income-sources/summary/monthly?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/income-sources/summary/monthly?userId=${userId}`);
     return response.data;
   },
 
   async getTotalAnnualIncome(userId: number): Promise<number> {
-    const response = await axios.get(`${API_BASE_URL}/api/income-sources/summary/annual?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/income-sources/summary/annual?userId=${userId}`);
     return response.data;
   },
 };

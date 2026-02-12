@@ -9,6 +9,7 @@ import Expenses from './ui/pages/Expenses'
 import Goals from './ui/pages/Goals'
 import Chat from './ui/pages/Chat'
 import { LoginPage } from './pages/LoginPage'
+import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import AccountsPage from './pages/AccountsPage'
@@ -19,6 +20,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallbackPage />,
   },
   {
     path: '/profile',

@@ -14,6 +14,7 @@ interface DashboardData {
   insights: Array<{ type: string; message: string }>
   cashFlowForecast?: Array<{ date: string; predicted_balance: number; risk_level: string }>
   riskScore?: number
+  goalPrediction?: { predicted_completion_date: string; confidence_score: number; recommendations: string[] }
 }
 
 export default function Dashboard() {
@@ -38,7 +39,7 @@ export default function Dashboard() {
       setError(null)
 
       // Fetch summary data from backend API
-      const summaryResponse = await fetch('/api/finance/api/summary')
+      const summaryResponse = await fetch('/api/transactions/summary')
 
       if (!summaryResponse.ok) {
         throw new Error(`Failed to fetch summary data: ${summaryResponse.status}`)
@@ -47,7 +48,7 @@ export default function Dashboard() {
       const summary = await summaryResponse.json()
 
       // Fetch recent transactions for spending breakdown
-      const transactionsResponse = await fetch('/api/finance/api/transactions?limit=50')
+      const transactionsResponse = await fetch('/api/transactions?limit=50')
 
       let spendingBreakdown: Array<{ name: string; value: number }> = []
       if (transactionsResponse.ok) {
@@ -71,7 +72,7 @@ export default function Dashboard() {
       // Fetch AI insights
       let insights: Array<{ type: string; message: string }> = []
       try {
-        const insightsResponse = await fetch('/api/finance/api/insights')
+        const insightsResponse = await fetch('/api/insights')
 
         if (insightsResponse.ok) {
           insights = await insightsResponse.json()

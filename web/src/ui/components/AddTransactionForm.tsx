@@ -109,7 +109,7 @@ export default function AddTransactionForm({ onClose, onSuccess }: {
         return
       }
 
-      const response = await fetch('/api/finance/api/transactions', {
+      const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

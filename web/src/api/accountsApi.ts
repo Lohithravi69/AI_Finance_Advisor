@@ -33,46 +33,46 @@ export interface AccountResponse {
 
 export const accountsApi = {
   async createAccount(userId: number, request: AccountRequest): Promise<AccountResponse> {
-    const response = await axios.post(`${API_BASE_URL}/api/accounts?userId=${userId}`, request);
+    const response = await axios.post(`${API_BASE_URL}/accounts?userId=${userId}`, request);
     return response.data;
   },
 
   async getAccounts(userId: number): Promise<AccountResponse[]> {
-    const response = await axios.get(`${API_BASE_URL}/api/accounts?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/accounts?userId=${userId}`);
     return response.data;
   },
 
   async getActiveAccounts(userId: number): Promise<AccountResponse[]> {
-    const response = await axios.get(`${API_BASE_URL}/api/accounts/active?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/accounts/active?userId=${userId}`);
     return response.data;
   },
 
   async getPrimaryAccount(userId: number): Promise<AccountResponse> {
-    const response = await axios.get(`${API_BASE_URL}/api/accounts/primary?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/accounts/primary?userId=${userId}`);
     return response.data;
   },
 
   async getAccountById(id: number): Promise<AccountResponse> {
-    const response = await axios.get(`${API_BASE_URL}/api/accounts/${id}`);
+    const response = await axios.get(`${API_BASE_URL}/accounts/${id}`);
     return response.data;
   },
 
   async getAccountsByType(userId: number, type: string): Promise<AccountResponse[]> {
-    const response = await axios.get(`${API_BASE_URL}/api/accounts/type/${type}?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/accounts/type/${type}?userId=${userId}`);
     return response.data;
   },
 
   async updateAccount(id: number, request: AccountRequest): Promise<AccountResponse> {
-    const response = await axios.put(`${API_BASE_URL}/api/accounts/${id}`, request);
+    const response = await axios.put(`${API_BASE_URL}/accounts/${id}`, request);
     return response.data;
   },
 
   async deleteAccount(id: number): Promise<void> {
-    await axios.delete(`${API_BASE_URL}/api/accounts/${id}`);
+    await axios.delete(`${API_BASE_URL}/accounts/${id}`);
   },
 
   async getNetWorth(userId: number): Promise<number> {
-    const response = await axios.get(`${API_BASE_URL}/api/accounts/net-worth?userId=${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/accounts/net-worth?userId=${userId}`);
     return response.data;
   },
 };

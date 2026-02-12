@@ -3,19 +3,21 @@ spring:
     name: finance-service
   datasource:
     url: jdbc:h2:mem:aifinance
-    driverClassName: org.h2.Driver
     username: sa
     password:
+    driverClassName: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
     database: h2
     show-sql: false
     properties:
       hibernate.format_sql: true
-  h2:
-    console:
-      enabled: true
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
   security:

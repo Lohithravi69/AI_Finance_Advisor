@@ -1,10 +1,10 @@
 package com.aifa.finance.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
-import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,11 +13,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TransactionResponse {
     private Long id;
-    private Long userId;
-    private String type;
-    private Double amount;
     private String description;
-    private LocalDate transactionDate;
+    private BigDecimal amount;
+    private String type; // INCOME, EXPENSE
+    private String category;
+    private String merchant;
+    private LocalDateTime date;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
