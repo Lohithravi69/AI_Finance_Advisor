@@ -122,11 +122,23 @@ export default function GoalTimeline({ goalId, currentAmount, targetAmount, mont
   const projectedDate = new Date()
   projectedDate.setMonth(projectedDate.getMonth() + monthsRemaining)
 
-  const getFeasibilityColor = (score number) => {
-   nif (s >= 0.6) return 'text-yellow-400'
-    if (s >= 0.4) return 'text-orange-400'
-    returext-red-400'
+  const getFeasibilityColor = (score?: number): string => {
+    const safeScore = score ?? 0.7
+    if (safeScore >= 0.8) return 'text-green-400'
+    if (safeScore >= 0.6) return 'text-yellow-400'
+    if (safeScore >= 0.4) return 'text-orange-400'
+    return 'text-red-400'
   }
+
+  const getFeasibilityLabel = (score?: number): string => {
+    const safeScore = score ?? 0.7
+    if (safeScore >= 0.8) return 'Excellent'
+    if (safeScore >= 0.6) return 'Good'
+    if (safeScore >= 0.4) return 'Fair'
+    return 'Needs attention'
+  }
+
+  const feasibilityScore = forecast?.feasibility_score
 
   return (
     <motion.div 
@@ -181,13 +193,11 @@ export default function GoalTimeline({ goalId, currentAmount, targetAmount, mont
         
         <div className="p-4 rounded-lg bg-white/5 border border-white/10">
           <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Feasibility Score</div>
-          <div className={`text-lg font-semibold ${getFeasibilityColor(forecast?.feasibility_score || 0.7)}`}>
-            {forecast ? `${Math.round(forecast.feasibility_score * 100)}%` : 'N/A'}
+          <div className={`text-lg font-semibold ${getFeasibilityColor(feasibilityScore)}`}>
+            {feasibilityScore !== undefined ? `${Math.round(feasibilityScore * 100)}%` : 'N/A'}
           </div>
           <div className="text-xs text-slate-400">
-            {forecast?.feasibility_score >= 0.8 ? 'Excellent' : 
-             forecast?.feasibility_score >= 0.6 ? 'Good' : 
-             forecast?.feasibility_score >= 0.4 ? 'Fair' : 'Needs attention'}
+            {getFeasibilityLabel(feasibilityScore)}
           </div>
         </div>
       </div>

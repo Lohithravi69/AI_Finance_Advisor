@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import BudgetAlerts, { generateBudgetAlerts } from '../components/BudgetAlerts'
+import CashFlowForecastChart from '../components/CashFlowForecastChart'
+import RiskAssessmentCard from '../components/RiskAssessmentCard'
 import { useAuthStore } from '../../stores/authStore'
 import { startKeycloakAuth } from '../../utils/keycloakAuth'
 
@@ -265,6 +267,12 @@ export default function Dashboard() {
               ))}
             </div>
           </motion.div>
+
+          {/* Cash Flow Forecast Chart */}
+          <CashFlowForecastChart />
+
+          {/* Risk Assessment Card */}
+          <RiskAssessmentCard />
         </div>
       </div>
 
