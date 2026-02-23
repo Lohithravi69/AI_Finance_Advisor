@@ -2,10 +2,14 @@ package com.aifa.finance.controller;
 
 import com.aifa.finance.dto.GoalRequest;
 import com.aifa.finance.dto.GoalResponse;
+import com.aifa.finance.domain.User;
+import com.aifa.finance.service.AuthService;
 import com.aifa.finance.service.GoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,34 +19,35 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GoalController {
 
+    private final AuthService authService;
     private final GoalService goalService;
 
     @PostMapping
     public ResponseEntity<GoalResponse> createGoal(
             @RequestBody GoalRequest request,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-        
-        String userId = extractUserIdFromToken(token);
-        GoalResponse response = goalService.createGoal(request, userId);
+            @AuthenticationPrincipal Jwt jwt) {
+
+        User user = authService.getOrCreateUser(jwt);
+        GoalResponse response = goalService.createGoal(request, user.getKeycloakId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     public ResponseEntity<List<GoalResponse>> listGoals(
-            @RequestHeader(value = "Authorization", required = false) String token) {
-        
-        String userId = extractUserIdFromToken(token);
-        List<GoalResponse> goals = goalService.listGoals(userId);
+            @AuthenticationPrincipal Jwt jwt) {
+
+        User user = authService.getOrCreateUser(jwt);
+        List<GoalResponse> goals = goalService.listGoals(user.getKeycloakId());
         return ResponseEntity.ok(goals);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<GoalResponse> getGoal(
             @PathVariable Long id,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-        
-        String userId = extractUserIdFromToken(token);
-        GoalResponse goal = goalService.getGoalById(id, userId);
+            @AuthenticationPrincipal Jwt jwt) {
+
+        User user = authService.getOrCreateUser(jwt);
+        GoalResponse goal = goalService.getGoalById(id, user.getKeycloakId());
         return ResponseEntity.ok(goal);
     }
 
@@ -50,27 +55,20 @@ public class GoalController {
     public ResponseEntity<GoalResponse> updateGoal(
             @PathVariable Long id,
             @RequestBody GoalRequest request,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @AuthenticationPrincipal Jwt jwt) {
 
-        String userId = extractUserIdFromToken(token);
-        GoalResponse response = goalService.updateGoal(id, request, userId);
+        User user = authService.getOrCreateUser(jwt);
+        GoalResponse response = goalService.updateGoal(id, request, user.getKeycloakId());
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteGoal(
             @PathVariable Long id,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @AuthenticationPrincipal Jwt jwt) {
 
-        String userId = extractUserIdFromToken(token);
-        goalService.deleteGoal(id, userId);
+        User user = authService.getOrCreateUser(jwt);
+        goalService.deleteGoal(id, user.getKeycloakId());
         return ResponseEntity.noContent().build();
-    }
-
-    private String extractUserIdFromToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        return "test-user";
     }
 }

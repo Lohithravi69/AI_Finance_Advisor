@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import BudgetAlerts, { generateBudgetAlerts } from '../components/BudgetAlerts'
+import { useAuthStore } from '../../stores/authStore'
+import { startKeycloakAuth } from '../../utils/keycloakAuth'
 
 const COLORS = ['#2ac0ff', '#8fe2ff', '#57d3ff', '#0f628b', '#ff6b6b', '#4ecdc4', '#ffe66d', '#dda0dd']
 
@@ -18,6 +21,10 @@ interface DashboardData {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate()
+  const { isAuthenticated, user, logout, token } = useAuthStore()
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [authAction, setAuthAction] = useState<'login' | 'signup' | null>(null)
   const [data, setData] = useState<DashboardData>({
     balance: 0,
     income: 0,
@@ -26,20 +33,49 @@ export default function Dashboard() {
     spendingBreakdown: [],
     insights: []
   })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    if (isAuthenticated) {
+      fetchDashboardData()
+      return
+    }
+
+    setLoading(false)
+    setError(null)
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setAccountMenuOpen(false)
+      return
+    }
+
+    const shouldShowMenu = sessionStorage.getItem('show_account_menu') === '1'
+    if (shouldShowMenu) {
+      setAccountMenuOpen(true)
+      sessionStorage.removeItem('show_account_menu')
+    }
+  }, [isAuthenticated])
 
   const fetchDashboardData = async () => {
+    if (!isAuthenticated) {
+      setLoading(false)
+      setError(null)
+      return
+    }
+
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : undefined
+
     try {
       setLoading(true)
       setError(null)
 
       // Fetch summary data from backend API
-      const summaryResponse = await fetch('/api/transactions/summary')
+      const summaryResponse = await fetch('/api/summary', {
+        headers: authHeaders,
+      })
 
       if (!summaryResponse.ok) {
         throw new Error(`Failed to fetch summary data: ${summaryResponse.status}`)
@@ -48,7 +84,9 @@ export default function Dashboard() {
       const summary = await summaryResponse.json()
 
       // Fetch recent transactions for spending breakdown
-      const transactionsResponse = await fetch('/api/transactions?limit=50')
+      const transactionsResponse = await fetch('/api/transactions?limit=50', {
+        headers: authHeaders,
+      })
 
       let spendingBreakdown: Array<{ name: string; value: number }> = []
       if (transactionsResponse.ok) {
@@ -72,7 +110,9 @@ export default function Dashboard() {
       // Fetch AI insights
       let insights: Array<{ type: string; message: string }> = []
       try {
-        const insightsResponse = await fetch('/api/insights')
+        const insightsResponse = await fetch('/api/insights', {
+          headers: authHeaders,
+        })
 
         if (insightsResponse.ok) {
           insights = await insightsResponse.json()
@@ -109,7 +149,7 @@ export default function Dashboard() {
     }
   }
 
-  if (loading) {
+  if (loading && isAuthenticated) {
     return (
       <div className="grid md:grid-cols-3 gap-4">
         <motion.div className="card p-5 col-span-2" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
@@ -129,7 +169,7 @@ export default function Dashboard() {
     )
   }
 
-  if (error) {
+  if (error && isAuthenticated) {
     return (
       <div className="grid md:grid-cols-3 gap-4">
         <motion.div className="card p-5 md:col-span-3" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
@@ -149,63 +189,170 @@ export default function Dashboard() {
   }
 
   const budgetAlerts = generateBudgetAlerts(data)
+  const showAuthOverlay = !isAuthenticated
+  const accountName = user?.fullName || user?.email || 'Your Account'
+  const accountEmail = user?.email || 'No email on file'
+
+  const handleAuth = (mode: 'login' | 'signup') => {
+    setAuthAction(mode)
+    startKeycloakAuth(mode, '/dashboard')
+  }
 
   return (
-    <div className="grid md:grid-cols-3 gap-4">
-      <motion.div className="card p-5 col-span-2" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="text-sm text-slate-400">Monthly Balance</div>
-            <div className={`text-4xl font-semibold tracking-tight ${data.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              ${data.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    <div className="relative">
+      {isAuthenticated && !accountMenuOpen && (
+        <button
+          className="fixed right-6 top-24 z-10 rounded-full bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20 transition"
+          onClick={() => setAccountMenuOpen(true)}
+        >
+          Account
+        </button>
+      )}
+
+      <div className={showAuthOverlay ? 'blur-md opacity-60 pointer-events-none select-none' : ''}>
+        <div className="grid md:grid-cols-3 gap-4">
+          <motion.div className="card p-5 col-span-2" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-sm text-slate-400">Monthly Balance</div>
+                <div className={`text-4xl font-semibold tracking-tight ${data.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  ${data.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div className="mt-4 text-sm text-slate-400">Savings Progress</div>
+                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-brand-500 to-cyan-400 transition-all duration-500"
+                    style={{width: `${Math.max(data.savingsProgress, 5)}%`}}
+                  />
+                </div>
+                <div className="text-xs text-slate-400 mt-1">{data.savingsProgress.toFixed(1)}% saved</div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-slate-400">Income</div>
+                <div className="text-xl text-green-400">${data.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div className="text-sm text-slate-400 mt-2">Expenses</div>
+                <div className="text-xl text-red-400">${data.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
             </div>
-            <div className="mt-4 text-sm text-slate-400">Savings Progress</div>
-            <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-brand-500 to-cyan-400 transition-all duration-500"
-                style={{width: `${Math.max(data.savingsProgress, 5)}%`}}
-              />
+          </motion.div>
+
+          <motion.div className="card p-5" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
+            <div className="text-sm text-slate-400 mb-2">Spending Breakdown</div>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={data.spendingBreakdown} dataKey="value" nameKey="name" outerRadius={70} innerRadius={40}>
+                    {data.spendingBreakdown.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-            <div className="text-xs text-slate-400 mt-1">{data.savingsProgress.toFixed(1)}% saved</div>
+          </motion.div>
+
+          <motion.div className="card p-5 md:col-span-3" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
+            <BudgetAlerts alerts={budgetAlerts} />
+          </motion.div>
+
+          <motion.div className="card p-5 md:col-span-3" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
+            <div className="text-sm text-slate-400 mb-2">AI Insights</div>
+            <div className="grid md:grid-cols-3 gap-3">
+              {data.insights.slice(0, 3).map((insight, index) => (
+                <div key={index} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  {insight.message}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {showAuthOverlay && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm px-4">
+          <motion.div
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/95 p-6 shadow-2xl"
+            initial={{opacity: 0, y: 16}}
+            animate={{opacity: 1, y: 0}}
+          >
+            <div className="text-sm uppercase tracking-[0.2em] text-slate-400">Welcome</div>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Sign in to unlock your dashboard</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Log in or create an account to see live balances, insights, and your full account menu.
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={() => handleAuth('login')}
+                disabled={authAction !== null}
+                className="w-full rounded-lg bg-brand-500 py-2 text-white hover:bg-brand-600 transition disabled:opacity-70"
+              >
+                {authAction === 'login' ? 'Redirecting...' : 'Login with Keycloak'}
+              </button>
+              <button
+                onClick={() => handleAuth('signup')}
+                disabled={authAction !== null}
+                className="w-full rounded-lg border border-white/10 bg-white/5 py-2 text-white hover:bg-white/10 transition disabled:opacity-70"
+              >
+                {authAction === 'signup' ? 'Redirecting...' : 'Create an account'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {isAuthenticated && accountMenuOpen && (
+        <motion.div
+          className="fixed right-6 top-24 z-20 w-80 rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl"
+          initial={{opacity: 0, x: 20}}
+          animate={{opacity: 1, x: 0}}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Account</div>
+              <div className="mt-1 text-lg font-semibold text-white">{accountName}</div>
+              <div className="text-sm text-slate-400">{accountEmail}</div>
+            </div>
+            <button
+              onClick={() => setAccountMenuOpen(false)}
+              className="text-slate-400 hover:text-white"
+            >
+              Close
+            </button>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-slate-400">Income</div>
-            <div className="text-xl text-green-400">${data.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div className="text-sm text-slate-400 mt-2">Expenses</div>
-            <div className="text-xl text-red-400">${data.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+
+          <div className="mt-4 space-y-2">
+            <button
+              onClick={() => {
+                setAccountMenuOpen(false)
+                navigate('/profile')
+              }}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-sm text-white hover:bg-white/10 transition"
+            >
+              View profile
+            </button>
+            <button
+              onClick={() => {
+                setAccountMenuOpen(false)
+                navigate('/accounts')
+              }}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-sm text-white hover:bg-white/10 transition"
+            >
+              Manage accounts
+            </button>
+            <button
+              onClick={() => {
+                logout()
+                setAccountMenuOpen(false)
+                navigate('/')
+              }}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-sm text-white hover:bg-white/10 transition"
+            >
+              Sign out
+            </button>
           </div>
-        </div>
-      </motion.div>
-
-      <motion.div className="card p-5" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
-        <div className="text-sm text-slate-400 mb-2">Spending Breakdown</div>
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={data.spendingBreakdown} dataKey="value" nameKey="name" outerRadius={70} innerRadius={40}>
-                {data.spendingBreakdown.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
-
-      <motion.div className="card p-5 md:col-span-3" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
-        <BudgetAlerts alerts={budgetAlerts} />
-      </motion.div>
-
-      <motion.div className="card p-5 md:col-span-3" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
-        <div className="text-sm text-slate-400 mb-2">AI Insights</div>
-        <div className="grid md:grid-cols-3 gap-3">
-          {data.insights.slice(0, 3).map((insight, index) => (
-            <div key={index} className="p-4 rounded-lg bg-white/5 border border-white/10">
-              {insight.message}
-            </div>
-          ))}
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   )
 }

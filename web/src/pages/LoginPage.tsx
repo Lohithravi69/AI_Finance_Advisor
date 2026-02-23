@@ -1,43 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
+import { startKeycloakAuth } from '../utils/keycloakAuth';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async () => {
     setIsLoading(true);
     setError('');
 
     try {
-      // Production OAuth2 flow with Keycloak
-      const keycloakUrl = 'http://localhost:8888';
-      const realm = 'aifa';
-      const clientId = 'aifa-web';
-      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
-
-      // Generate state for CSRF protection
-      const state = btoa(JSON.stringify({
-        nonce: Math.random().toString(36).substring(2),
-        redirect: '/dashboard'
-      }));
-
-      // Store state in sessionStorage
-      sessionStorage.setItem('oauth_state', state);
-
-      // Redirect to Keycloak login
-      const loginUrl = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/auth?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${redirectUri}&` +
-        `response_type=code&` +
-        `scope=openid profile email&` +
-        `state=${encodeURIComponent(state)}`;
-
-      window.location.href = loginUrl;
+      startKeycloakAuth('login', '/dashboard');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
@@ -51,30 +35,7 @@ export const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      // Production OAuth2 flow with Keycloak - registration
-      const keycloakUrl = 'http://localhost:8888';
-      const realm = 'aifa';
-      const clientId = 'aifa-web';
-      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
-
-      // Generate state for CSRF protection
-      const state = btoa(JSON.stringify({
-        nonce: Math.random().toString(36).substring(2),
-        redirect: '/dashboard'
-      }));
-
-      // Store state in sessionStorage
-      sessionStorage.setItem('oauth_state', state);
-
-      // Redirect to Keycloak registration
-      const signupUrl = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/registrations?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${redirectUri}&` +
-        `response_type=code&` +
-        `scope=openid profile email&` +
-        `state=${encodeURIComponent(state)}`;
-
-      window.location.href = signupUrl;
+      startKeycloakAuth('signup', '/dashboard');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Signup failed';
       setError(message);

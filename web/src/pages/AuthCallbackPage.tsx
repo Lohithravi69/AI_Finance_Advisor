@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 export const AuthCallbackPage: React.FC = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
-  const { login } = useAuthStore();
+  const { login, setUser } = useAuthStore();
 
   useEffect(() => {
     handleAuthCallback();
@@ -56,7 +56,7 @@ export const AuthCallbackPage: React.FC = () => {
       }
 
       const tokenData = await tokenResponse.json();
-      const { access_token, refresh_token, id_token } = tokenData;
+      const { access_token, refresh_token } = tokenData;
 
       // Decode JWT to get user info (simple decode, not secure validation)
       const payload = JSON.parse(atob(access_token.split('.')[1]));
@@ -67,13 +67,44 @@ export const AuthCallbackPage: React.FC = () => {
       };
 
       // Store tokens and user
-      login(access_token, user);
+      login(access_token, refresh_token, user);
 
       // Store refresh token securely
       localStorage.setItem('refresh_token', refresh_token);
 
+      const redirect = (() => {
+        if (!storedState) return '/dashboard';
+        try {
+          const parsed = JSON.parse(atob(storedState));
+          return typeof parsed.redirect === 'string' ? parsed.redirect : '/dashboard';
+        } catch {
+          return '/dashboard';
+        }
+      })();
+
+      try {
+        const profileResponse = await fetch('/api/auth/profile', {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
+
+        if (profileResponse.ok) {
+          const profile = await profileResponse.json();
+          setUser({
+            id: profile.id,
+            email: profile.email || user.email,
+            fullName: profile.fullName || user.fullName,
+          });
+        }
+      } catch (profileError) {
+        console.warn('Failed to sync user profile to DB', profileError);
+      }
+
+      sessionStorage.setItem('show_account_menu', '1');
+
       toast.success('Login successful!');
-      navigate('/dashboard');
+      navigate(redirect);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Authentication failed';
       setError(message);

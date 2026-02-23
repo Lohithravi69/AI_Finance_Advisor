@@ -33,7 +33,8 @@ const router = createBrowserRouter([
     path: '/',
     element: <App />,
     children: [
-      { index: true, element: <ProtectedRoute><Dashboard /></ProtectedRoute> },
+      { index: true, element: <Dashboard /> },
+      { path: 'dashboard', element: <Dashboard /> },
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'expenses', element: <ProtectedRoute><Expenses /></ProtectedRoute> },
       { path: 'goals', element: <ProtectedRoute><Goals /></ProtectedRoute> },
