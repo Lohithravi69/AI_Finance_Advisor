@@ -3,6 +3,7 @@ package com.aifa.finance.api;
 import com.aifa.finance.api.dto.TransactionDto;
 import com.aifa.finance.dto.CashFlowForecastResponse;
 import com.aifa.finance.dto.GoalPredictionResponse;
+import com.aifa.finance.dto.RiskAssessmentResponse;
 import com.aifa.finance.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -250,6 +251,86 @@ public class InsightsController {
             .forecastId("fallback_" + System.currentTimeMillis())
             .timestamp(java.time.Instant.now().toString())
             .forecast(Map.of("error", "AI service unavailable"))
+            .insights(List.of())
+            .confidence(0.1)
+            .build();
+    }
+
+    /**
+     * Get comprehensive financial risk assessment
+     */
+    @GetMapping("/risk-assessment")
+    public RiskAssessmentResponse getRiskAssessment(@AuthenticationPrincipal Jwt jwt) {
+        var transactions = transactionService.listTransactions(jwt, 100);
+        
+        List<Map<String, Object>> transactionData = transactions.stream()
+            .map(t -> Map.<String, Object>of(
+                "id", t.id(),
+                "type", t.type(),
+                "amount", t.amount(),
+                "date", t.date(),
+                "category", t.category()
+            ))
+            .collect(Collectors.toList());
+
+        Map<String, Object> userProfile = Map.of(
+            "debt_to_income_ratio", 0.3,
+            "monthly_income", 5000.0,
+            "has_emergency_fund", true
+        );
+
+        try {
+            var response = aiClient.postForObject(
+                aiServiceUrl + "/ai/predict/risk",
+                Map.of("userProfile", userProfile, "transactions", transactionData),
+                Map.class
+            );
+
+            if (response != null) {
+                Map<String, Object> riskData = (Map<String, Object>) response.get("risk_assessment");
+                
+                List<RiskAssessmentResponse.InsightResponse> insights = 
+                    ((List<Map<String, Object>>) response.get("insights")).stream()
+                        .map(insight -> RiskAssessmentResponse.InsightResponse.builder()
+                            .type((String) insight.get("type"))
+                            .severity((String) insight.get("severity"))
+                            .category((String) insight.get("category"))
+                            .message((String) insight.get("message"))
+                            .currentAmount(insight.get("current_amount") != null ? 
+                                ((Number) insight.get("current_amount")).doubleValue() : null)
+                            .targetAmount(insight.get("target_amount") != null ? 
+                                ((Number) insight.get("target_amount")).doubleValue() : null)
+                            .percentageChange(insight.get("percentage_change") != null ? 
+                                ((Number) insight.get("percentage_change")).doubleValue() : null)
+                            .build())
+                        .collect(Collectors.toList());
+
+                return RiskAssessmentResponse.builder()
+                    .assessmentId((String) response.get("assessment_id"))
+                    .timestamp((String) response.get("timestamp"))
+                    .riskAssessment(RiskAssessmentResponse.RiskAssessment.builder()
+                        .overallRiskScore(((Number) riskData.get("overall_risk_score")).doubleValue())
+                        .riskFactors((List<String>) riskData.get("risk_factors"))
+                        .mitigationStrategies((List<String>) riskData.get("mitigation_strategies"))
+                        .confidenceLevel(((Number) riskData.get("confidence_level")).doubleValue())
+                        .build())
+                    .insights(insights)
+                    .confidence(((Number) response.get("confidence")).doubleValue())
+                    .build();
+            }
+        } catch (Exception e) {
+            System.err.println("Risk assessment failed: " + e.getMessage());
+        }
+
+        return RiskAssessmentResponse.builder()
+            .assessmentId("fallback_" + System.currentTimeMillis())
+            .timestamp(java.time.Instant.now().toString())
+            .riskAssessment(RiskAssessmentResponse.RiskAssessment.builder()
+                .overallRiskScore(0.5)
+                .riskFactors(List.of("Unable to assess - AI service unavailable"))
+                .mitigationStrategies(List.of("Try again later"))
+                .confidenceLevel(0.1)
+                .build())
             .insights(List.of())
             .confidence(0.1)
             .build();
