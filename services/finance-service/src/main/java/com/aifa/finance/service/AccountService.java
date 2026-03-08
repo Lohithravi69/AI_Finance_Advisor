@@ -14,10 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class AccountService {
 
     private final AccountRepository accountRepository;
@@ -26,7 +28,7 @@ public class AccountService {
     @Transactional
     public AccountResponse createAccount(Long userId, AccountRequest request) {
         log.info("Creating account for user: {}", userId);
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (request.isPrimary()) {
@@ -50,7 +52,7 @@ public class AccountService {
             .isActive(true)
             .build();
 
-        Account saved = accountRepository.save(account);
+        Account saved = Objects.requireNonNull(accountRepository.save(account), "Saved account must not be null");
         return toResponse(saved);
     }
 
@@ -77,7 +79,7 @@ public class AccountService {
 
     @Transactional(readOnly = true)
     public AccountResponse getAccountById(Long accountId) {
-        Account account = accountRepository.findById(accountId)
+        Account account = accountRepository.findById(Objects.requireNonNull(accountId, "accountId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
         return toResponse(account);
     }
@@ -92,7 +94,7 @@ public class AccountService {
 
     @Transactional
     public AccountResponse updateAccount(Long accountId, AccountRequest request) {
-        Account account = accountRepository.findById(accountId)
+        Account account = accountRepository.findById(Objects.requireNonNull(accountId, "accountId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
         if (request.isPrimary() && !account.getIsPrimary()) {
@@ -118,10 +120,11 @@ public class AccountService {
 
     @Transactional
     public void deleteAccount(Long accountId) {
-        if (!accountRepository.existsById(accountId)) {
+        Long safeAccountId = Objects.requireNonNull(accountId, "accountId must not be null");
+        if (!accountRepository.existsById(safeAccountId)) {
             throw new ResourceNotFoundException("Account not found");
         }
-        accountRepository.deleteById(accountId);
+        accountRepository.deleteById(safeAccountId);
     }
 
     @Transactional(readOnly = true)

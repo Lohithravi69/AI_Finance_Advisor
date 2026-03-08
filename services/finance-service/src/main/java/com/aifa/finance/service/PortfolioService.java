@@ -12,12 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class PortfolioService {
 
     private final PortfolioRepository portfolioRepository;
@@ -25,7 +26,7 @@ public class PortfolioService {
 
     @Transactional
     public PortfolioResponse createPortfolio(Long userId, PortfolioRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Portfolio portfolio = Portfolio.builder()
@@ -45,7 +46,7 @@ public class PortfolioService {
             .rebalanceNeeded(false)
             .build();
 
-        portfolio = portfolioRepository.save(portfolio);
+        portfolio = Objects.requireNonNull(portfolioRepository.save(portfolio), "Saved portfolio must not be null");
         return toResponse(portfolio);
     }
 
@@ -59,14 +60,15 @@ public class PortfolioService {
 
     @Transactional(readOnly = true)
     public PortfolioResponse getPortfolioById(Long id) {
-        return portfolioRepository.findById(id)
+        return portfolioRepository.findById(Objects.requireNonNull(id, "id must not be null"))
             .map(this::toResponse)
             .orElseThrow(() -> new ResourceNotFoundException("Portfolio not found"));
     }
 
     @Transactional
     public PortfolioResponse updatePortfolio(Long id, PortfolioRequest request) {
-        Portfolio portfolio = portfolioRepository.findById(id)
+        Long safeId = Objects.requireNonNull(id, "id must not be null");
+        Portfolio portfolio = portfolioRepository.findById(safeId)
             .orElseThrow(() -> new ResourceNotFoundException("Portfolio not found"));
 
         portfolio.setPortfolioName(request.portfolioName());
@@ -76,22 +78,22 @@ public class PortfolioService {
         portfolio.setAllocationCrypto(request.allocationCrypto());
         portfolio.setAllocationOther(request.allocationOther());
 
-        portfolio = portfolioRepository.save(portfolio);
+        portfolio = Objects.requireNonNull(portfolioRepository.save(portfolio), "Updated portfolio must not be null");
         return toResponse(portfolio);
     }
 
     @Transactional
     public void deletePortfolio(Long id) {
-        portfolioRepository.deleteById(id);
+        portfolioRepository.deleteById(Objects.requireNonNull(id, "id must not be null"));
     }
 
     @Transactional
     public PortfolioResponse rebalancePortfolio(Long id) {
-        Portfolio portfolio = portfolioRepository.findById(id)
+        Portfolio portfolio = portfolioRepository.findById(Objects.requireNonNull(id, "id must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("Portfolio not found"));
 
         portfolio.setRebalanceNeeded(false);
-        portfolio = portfolioRepository.save(portfolio);
+        portfolio = Objects.requireNonNull(portfolioRepository.save(portfolio), "Rebalanced portfolio must not be null");
         return toResponse(portfolio);
     }
 

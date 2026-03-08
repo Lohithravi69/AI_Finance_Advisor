@@ -33,18 +33,22 @@ public class SyncLog {
 
     @Column(name = "sync_status", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private SyncStatus syncStatus = SyncStatus.PENDING;
 
     @Column(name = "source_system", nullable = false, length = 100)
     private String sourceSystem; // e.g., "Google Drive", "OneDrive", "AWS S3"
 
     @Column(name = "items_synced")
+    @Builder.Default
     private Integer itemsSynced = 0;
 
     @Column(name = "conflicts_detected")
+    @Builder.Default
     private Integer conflictsDetected = 0;
 
     @Column(name = "conflicts_resolved")
+    @Builder.Default
     private Integer conflictsResolved = 0;
 
     @Column(name = "resolution_strategy", length = 50)

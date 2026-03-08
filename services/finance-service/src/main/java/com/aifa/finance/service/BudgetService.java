@@ -15,13 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@SuppressWarnings("null")
 public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final BudgetAlertRepository budgetAlertRepository;
@@ -160,8 +160,8 @@ public class BudgetService {
      * Get alerts for a budget
      */
     public List<BudgetAlertResponse> getBudgetAlerts(Long budgetId, Long userId) {
-        Budget budget = budgetRepository.findByIdAndUserId(budgetId, userId)
-                .orElseThrow(() -> new RuntimeException("Budget not found"));
+        budgetRepository.findByIdAndUserId(budgetId, userId)
+            .orElseThrow(() -> new RuntimeException("Budget not found"));
 
         return budgetAlertRepository.findByBudgetIdOrderByTriggeredAtDesc(budgetId).stream()
                 .map(this::toBudgetAlertResponse)

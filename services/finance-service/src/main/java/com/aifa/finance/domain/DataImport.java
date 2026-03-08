@@ -36,18 +36,23 @@ public class DataImport {
 
     @Column(name = "import_status", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private ImportStatus importStatus = ImportStatus.PENDING;
 
     @Column(name = "total_records")
+    @Builder.Default
     private Integer totalRecords = 0;
 
     @Column(name = "processed_records")
+    @Builder.Default
     private Integer processedRecords = 0;
 
     @Column(name = "success_count")
+    @Builder.Default
     private Integer successCount = 0;
 
     @Column(name = "error_count")
+    @Builder.Default
     private Integer errorCount = 0;
 
     @Column(name = "error_details", columnDefinition = "TEXT")

@@ -7,7 +7,6 @@ import com.aifa.finance.dto.ReportResponse;
 import com.aifa.finance.exception.ResourceNotFoundException;
 import com.aifa.finance.repository.ReportRepository;
 import com.aifa.finance.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +17,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ReportService {
 
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
-    private final ObjectMapper objectMapper;
 
     @Transactional
     public ReportResponse generateReport(Long userId, ReportRequest request) {

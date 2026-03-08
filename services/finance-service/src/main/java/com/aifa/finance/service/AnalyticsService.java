@@ -12,10 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class AnalyticsService {
 
     private final AnalyticsSnapshotRepository analyticsSnapshotRepository;
@@ -23,14 +25,15 @@ public class AnalyticsService {
 
     @Transactional
     public AnalyticsSnapshotResponse generateDailySnapshot(Long userId) {
-        User user = userRepository.findById(userId)
+        Long safeUserId = Objects.requireNonNull(userId, "userId must not be null");
+        User user = userRepository.findById(safeUserId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         LocalDate today = LocalDate.now();
 
         // Create simple snapshot with placeholder data
         AnalyticsSnapshot snapshot = analyticsSnapshotRepository
-            .findByUserIdAndSnapshotDate(userId, today)
+            .findByUserIdAndSnapshotDate(safeUserId, today)
             .orElse(AnalyticsSnapshot.builder()
                 .user(user)
                 .snapshotDate(today)
@@ -51,7 +54,7 @@ public class AnalyticsService {
                 .totalGoalProgress(BigDecimal.ZERO)
                 .build());
 
-        snapshot = analyticsSnapshotRepository.save(snapshot);
+        snapshot = Objects.requireNonNull(analyticsSnapshotRepository.save(snapshot), "Saved snapshot must not be null");
         return toResponse(snapshot);
     }
 

@@ -44,6 +44,7 @@ public class SavedSearch {
     private String sortOrder; // ASC, DESC
 
     @Column(name = "is_default")
+    @Builder.Default
     private Boolean isDefault = false;
 
     @Column(name = "created_at", nullable = false)

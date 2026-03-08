@@ -44,9 +44,11 @@ public class FinancialGoal {
     private BigDecimal targetAmount;
 
     @Column(name = "current_amount", precision = 19, scale = 2)
+    @Builder.Default
     private BigDecimal currentAmount = BigDecimal.ZERO;
 
     @Column(name = "progress_percentage", precision = 5, scale = 2)
+    @Builder.Default
     private BigDecimal progressPercentage = BigDecimal.ZERO;
 
     @Column(name = "start_date", nullable = false)
@@ -57,10 +59,12 @@ public class FinancialGoal {
 
     @Column(name = "status", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private GoalStatus status = GoalStatus.NOT_STARTED;
 
     @Column(name = "priority", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private GoalPriority priority = GoalPriority.MEDIUM;
 
     @Column(name = "monthly_contribution", precision = 19, scale = 2)
@@ -70,6 +74,7 @@ public class FinancialGoal {
     private Long accountId;
 
     @Column(name = "is_recurring")
+    @Builder.Default
     private Boolean isRecurring = false;
 
     @Column(name = "completion_date")

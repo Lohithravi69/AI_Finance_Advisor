@@ -36,3 +36,9 @@ management:
     web:
       exposure:
         include: "health,info"
+
+auth:
+  keycloak:
+    token-url: ${KEYCLOAK_TOKEN_URL:http://localhost:8888/realms/aifa/protocol/openid-connect/token}
+    client-id: ${KEYCLOAK_CLIENT_ID:aifa-web}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:}

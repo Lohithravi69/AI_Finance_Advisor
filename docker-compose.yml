@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # Infrastructure Services
   postgres:
@@ -90,6 +88,7 @@ services:
       dockerfile: Dockerfile
     container_name: aifa-ai-service
     environment:
+      AI_SERVICE_PORT: 8000
       MONGODB_URL: mongodb://mongo:27017
       REDIS_URL: redis://redis:6379
       DATABASE_NAME: aifinance
@@ -111,11 +110,17 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       FINANCE_SERVICE_URL: http://finance-service:8081
       AI_SERVICE_URL: http://ai-service:8000
+      SPRING_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/aifa
     ports:
       - "8080:8080"
     depends_on:
       - finance-service
       - ai-service
+      - redis
+      - keycloak
     networks:
       - aifa-network
     restart: unless-stopped

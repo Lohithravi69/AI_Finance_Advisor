@@ -1,13 +1,25 @@
 spring:
   application:
     name: api-gateway
+  redis:
+    host: ${SPRING_REDIS_HOST:redis}
+    port: ${SPRING_REDIS_PORT:6379}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:${SPRING_REDIS_HOST:redis}}
+      port: ${SPRING_DATA_REDIS_PORT:${SPRING_REDIS_PORT:6379}}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://keycloak:8080/realms/aifa}
   cloud:
     gateway:
       routes:
         - id: finance-service
           uri: ${FINANCE_SERVICE_URL:http://localhost:8081}
           predicates:
-            - Path=/api/finance/**
+            - Path=/api/finance/**,/api/auth/**,/api/health/**
           filters:
             - StripPrefix=2
         - id: ai-service
@@ -16,6 +28,8 @@ spring:
             - Path=/api/ai/**
           filters:
             - StripPrefix=2
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
       globalcors:
         cors-configurations:
           '[/**]':
@@ -28,6 +42,8 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
             allowCredentials: false
+            exposedHeaders:
+              - Authorization
 
 server:
   port: 8080

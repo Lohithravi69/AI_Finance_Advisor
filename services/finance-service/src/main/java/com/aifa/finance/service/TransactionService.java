@@ -7,9 +7,13 @@ import com.aifa.finance.dto.TransactionResponse;
 import com.aifa.finance.dto.FinancialSummaryResponse;
 import com.aifa.finance.domain.Transaction;
 import com.aifa.finance.domain.User;
+import com.aifa.finance.exception.ResourceNotFoundException;
 import com.aifa.finance.repository.TransactionRepository;
 import com.aifa.finance.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -24,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class TransactionService {
 
     private final UserRepository userRepository;
@@ -52,13 +58,81 @@ public class TransactionService {
         Transaction transaction = new Transaction();
         transaction.setUser(user);
         transaction.setType(request.getType());
-        transaction.setAmount(request.getAmount());
+                transaction.setAmount(request.getAmount() != null ? request.getAmount().doubleValue() : 0.0);
         transaction.setDescription(request.getDescription());
-        transaction.setTransactionDate(request.getTransactionDate());
+                transaction.setTransactionDate(request.getDate() != null ? request.getDate().toLocalDate() : LocalDate.now());
+                transaction.setCategory(request.getCategory());
+                transaction.setMerchant(request.getMerchant());
         
         Transaction saved = transactionRepository.save(transaction);
         return toResponse(saved);
     }
+
+        public TransactionResponse createTransaction(TransactionRequest request) {
+                return createTransaction(request, "test-user");
+        }
+
+        public Page<TransactionResponse> getTransactions(Pageable pageable, String type, String category) {
+                List<TransactionResponse> filtered = transactionRepository.findAll().stream()
+                                .filter(t -> type == null || type.equalsIgnoreCase(t.getType()))
+                                .filter(t -> category == null || category.equalsIgnoreCase(t.getCategory()))
+                                .sorted(Comparator.comparing(Transaction::getTransactionDate).reversed())
+                                .map(this::toResponse)
+                                .toList();
+
+                int start = (int) pageable.getOffset();
+                int end = Math.min(start + pageable.getPageSize(), filtered.size());
+                List<TransactionResponse> pageContent = start <= end ? filtered.subList(start, end) : List.of();
+                return new PageImpl<>(pageContent, pageable, filtered.size());
+        }
+
+        public TransactionResponse getTransactionById(Long id) {
+                Transaction transaction = transactionRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+                return toResponse(transaction);
+        }
+
+        public TransactionResponse updateTransaction(Long id, TransactionRequest request) {
+                Transaction transaction = transactionRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+                transaction.setType(request.getType());
+                transaction.setDescription(request.getDescription());
+                transaction.setAmount(request.getAmount() != null ? request.getAmount().doubleValue() : transaction.getAmount());
+                transaction.setTransactionDate(request.getDate() != null ? request.getDate().toLocalDate() : transaction.getTransactionDate());
+                transaction.setCategory(request.getCategory());
+                transaction.setMerchant(request.getMerchant());
+
+                Transaction saved = transactionRepository.save(transaction);
+                return toResponse(saved);
+        }
+
+        public void deleteTransaction(Long id) {
+                if (!transactionRepository.existsById(id)) {
+                        throw new ResourceNotFoundException("Transaction not found");
+                }
+                transactionRepository.deleteById(id);
+        }
+
+        public FinancialSummaryResponse getTransactionSummary() {
+                List<Transaction> transactions = transactionRepository.findAll();
+                double totalIncome = transactions.stream()
+                                .filter(t -> "INCOME".equalsIgnoreCase(t.getType()))
+                                .mapToDouble(t -> t.getAmount() != null ? t.getAmount() : 0.0)
+                                .sum();
+                double totalExpenses = transactions.stream()
+                                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()))
+                                .mapToDouble(t -> t.getAmount() != null ? t.getAmount() : 0.0)
+                                .sum();
+
+                return FinancialSummaryResponse.builder()
+                                .totalIncome(BigDecimal.valueOf(round(totalIncome)))
+                                .totalExpenses(BigDecimal.valueOf(round(totalExpenses)))
+                                .netSavings(BigDecimal.valueOf(round(totalIncome - totalExpenses)))
+                                .transactionCount((long) transactions.size())
+                                .period(YearMonth.now().toString())
+                                .build();
+        }
 
     public SummaryDto summary(Jwt jwt) {
         User user = ensureUser(jwt);
@@ -147,11 +221,12 @@ public class TransactionService {
     private TransactionResponse toResponse(Transaction t) {
         return TransactionResponse.builder()
                 .id(t.getId())
-                .userId(t.getUser() != null ? t.getUser().getId() : null)
                 .type(t.getType())
-                .amount(t.getAmount())
+                                .amount(t.getAmount() != null ? BigDecimal.valueOf(t.getAmount()) : null)
                 .description(t.getDescription())
-                .transactionDate(t.getTransactionDate())
+                                .category(t.getCategory())
+                                .merchant(t.getMerchant())
+                                .date(t.getTransactionDate() != null ? t.getTransactionDate().atStartOfDay() : null)
                 .createdAt(t.getCreatedAt())
                 .updatedAt(t.getUpdatedAt())
                 .build();

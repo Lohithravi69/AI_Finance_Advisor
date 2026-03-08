@@ -8,6 +8,7 @@ import Onboarding from './ui/pages/Onboarding'
 import Expenses from './ui/pages/Expenses'
 import Goals from './ui/pages/Goals'
 import Chat from './ui/pages/Chat'
+import Budgets from './ui/pages/Budgets'
 import { LoginPage } from './pages/LoginPage'
 import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'expenses', element: <ProtectedRoute><Expenses /></ProtectedRoute> },
+      { path: 'budgets', element: <ProtectedRoute><Budgets /></ProtectedRoute> },
       { path: 'goals', element: <ProtectedRoute><Goals /></ProtectedRoute> },
       { path: 'categories', element: <ProtectedRoute><CategoriesPage /></ProtectedRoute> },
       { path: 'accounts', element: <ProtectedRoute><AccountsPage /></ProtectedRoute> },

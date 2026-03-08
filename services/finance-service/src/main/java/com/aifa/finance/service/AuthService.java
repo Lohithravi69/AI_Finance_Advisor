@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@SuppressWarnings("null")
 public class AuthService {
     private final UserRepository userRepository;
     private final UserPreferencesRepository userPreferencesRepository;

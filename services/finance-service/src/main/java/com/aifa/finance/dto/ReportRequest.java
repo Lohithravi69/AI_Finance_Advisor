@@ -1,7 +1,5 @@
 package com.aifa.finance.dto;
 
-import com.aifa.finance.domain.Report;
-
 import java.time.LocalDateTime;
 
 public record ReportRequest(

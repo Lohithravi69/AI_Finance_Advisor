@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -58,6 +57,7 @@ public class Report {
     private LocalDateTime generatedAt;
 
     @Column(name = "is_scheduled", nullable = false)
+    @Builder.Default
     private Boolean isScheduled = false;
 
     @Column(name = "schedule_frequency", length = 50)

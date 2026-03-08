@@ -14,10 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class InvestmentService {
 
     private final InvestmentRepository investmentRepository;
@@ -25,7 +27,7 @@ public class InvestmentService {
 
     @Transactional
     public InvestmentResponse createInvestment(Long userId, InvestmentRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Investment investment = Investment.builder()
@@ -47,7 +49,7 @@ public class InvestmentService {
             .notes(request.notes())
             .build();
 
-        investment = investmentRepository.save(investment);
+        investment = Objects.requireNonNull(investmentRepository.save(investment), "Saved investment must not be null");
         return toResponse(investment);
     }
 
@@ -77,14 +79,15 @@ public class InvestmentService {
 
     @Transactional(readOnly = true)
     public InvestmentResponse getInvestmentById(Long id) {
-        return investmentRepository.findById(id)
+        return investmentRepository.findById(Objects.requireNonNull(id, "id must not be null"))
             .map(this::toResponse)
             .orElseThrow(() -> new ResourceNotFoundException("Investment not found"));
     }
 
     @Transactional
     public InvestmentResponse updateInvestment(Long id, InvestmentRequest request) {
-        Investment investment = investmentRepository.findById(id)
+        Long safeId = Objects.requireNonNull(id, "id must not be null");
+        Investment investment = investmentRepository.findById(safeId)
             .orElseThrow(() -> new ResourceNotFoundException("Investment not found"));
 
         investment.setSymbol(request.symbol());
@@ -98,13 +101,13 @@ public class InvestmentService {
         investment.setNotes(request.notes());
         investment.setLastUpdated(LocalDateTime.now());
 
-        investment = investmentRepository.save(investment);
+        investment = Objects.requireNonNull(investmentRepository.save(investment), "Updated investment must not be null");
         return toResponse(investment);
     }
 
     @Transactional
     public void deleteInvestment(Long id) {
-        investmentRepository.deleteById(id);
+        investmentRepository.deleteById(Objects.requireNonNull(id, "id must not be null"));
     }
 
     @Transactional(readOnly = true)
@@ -127,14 +130,14 @@ public class InvestmentService {
 
     @Transactional
     public InvestmentResponse updatePrice(Long id, BigDecimal newPrice) {
-        Investment investment = investmentRepository.findById(id)
+        Investment investment = investmentRepository.findById(Objects.requireNonNull(id, "id must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("Investment not found"));
 
         investment.setCurrentPrice(newPrice);
         investment.setLastUpdated(LocalDateTime.now());
         investment.calculateMetrics();
 
-        investment = investmentRepository.save(investment);
+        investment = Objects.requireNonNull(investmentRepository.save(investment), "Updated price investment must not be null");
         return toResponse(investment);
     }
 

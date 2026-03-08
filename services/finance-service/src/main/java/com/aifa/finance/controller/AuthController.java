@@ -3,17 +3,35 @@ package com.aifa.finance.controller;
 import com.aifa.finance.dto.UserProfileDto;
 import com.aifa.finance.model.UserPreferences;
 import com.aifa.finance.service.AuthService;
+import com.aifa.finance.service.KeycloakTokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final KeycloakTokenService keycloakTokenService;
+
+    @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<?> exchangeToken(@RequestParam MultiValueMap<String, String> formData) {
+        try {
+            return keycloakTokenService.exchangeToken(formData);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "invalid_request",
+                    "message", ex.getMessage()
+            ));
+        }
+    }
 
     /**
      * Login endpoint (OAuth2 flow)
@@ -23,9 +41,7 @@ public class AuthController {
     public ResponseEntity<Object> login(@AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {
             return ResponseEntity.badRequest()
-                    .body(new Object() {
-                        public String error = "No valid token provided";
-                    });
+                    .body(Map.of("error", "No valid token provided"));
         }
 
         Object loginResponse = authService.createLoginResponse(jwt);
@@ -48,7 +64,6 @@ public class AuthController {
     public ResponseEntity<UserProfileDto> updateProfile(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody UserProfileDto dto) {
-        String keycloakId = jwt.getClaimAsString("sub");
         Long userId = authService.getOrCreateUser(jwt).getId();
         UserProfileDto updatedProfile = authService.updateUserProfile(userId, dto);
         return ResponseEntity.ok(updatedProfile);
@@ -81,8 +96,6 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<Object> logout(@AuthenticationPrincipal Jwt jwt) {
-        return ResponseEntity.ok(new Object() {
-            public String message = "Logout successful";
-        });
+        return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
 }

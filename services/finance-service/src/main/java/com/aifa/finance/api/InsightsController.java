@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/insights")
 @RequiredArgsConstructor
+@SuppressWarnings("unchecked")
 public class InsightsController {
 
     private final TransactionService transactionService;
@@ -114,12 +115,11 @@ public class InsightsController {
 
     /**
      * Get cash flow forecast
+     * Uses authenticated user's JWT to fetch their specific transactions
      */
     @GetMapping("/cashflow-forecast")
     public CashFlowForecastResponse getCashFlowForecast(@AuthenticationPrincipal Jwt jwt) {
-        Long userId = jwt.getSubject() != null ? Long.parseLong(jwt.getSubject()) : 1L;
-
-        // Get user transactions for forecasting
+        // Get user transactions for forecasting - uses JWT for user isolation
         var transactions = transactionService.listTransactions(jwt, 100); // Get more data for better forecasting
 
         // Convert to format expected by AI service

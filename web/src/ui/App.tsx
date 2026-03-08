@@ -9,10 +9,14 @@ export default function App() {
       <header className="sticky top-0 z-10 backdrop-blur-md border-b border-white/10 bg-slate-950/70">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="font-semibold text-lg">AI Finance Advisor</div>
-          <nav className="flex items-center gap-2 text-sm">
+          <nav className="flex items-center gap-2 text-sm flex-wrap">
             <NavLink to="/" end className={({isActive}) => `${link} ${isActive?active:''}`}>Dashboard</NavLink>
             <NavLink to="/expenses" className={({isActive}) => `${link} ${isActive?active:''}`}>Expenses</NavLink>
+            <NavLink to="/budgets" className={({isActive}) => `${link} ${isActive?active:''}`}>Budgets</NavLink>
             <NavLink to="/goals" className={({isActive}) => `${link} ${isActive?active:''}`}>Goals</NavLink>
+            <NavLink to="/categories" className={({isActive}) => `${link} ${isActive?active:''}`}>Categories</NavLink>
+            <NavLink to="/accounts" className={({isActive}) => `${link} ${isActive?active:''}`}>Accounts</NavLink>
+            <NavLink to="/income-sources" className={({isActive}) => `${link} ${isActive?active:''}`}>Income</NavLink>
             <NavLink to="/chat" className={({isActive}) => `${link} ${isActive?active:''}`}>AI Advisor</NavLink>
             <NavLink to="/onboarding" className={({isActive}) => `${link} ${isActive?active:''}`}>Onboarding</NavLink>
             <ThemeToggle />

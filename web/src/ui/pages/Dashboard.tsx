@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import BudgetAlerts, { generateBudgetAlerts } from '../components/BudgetAlerts'
 import CashFlowForecastChart from '../components/CashFlowForecastChart'
 import RiskAssessmentCard from '../components/RiskAssessmentCard'
+import GoalTimeline from '../components/GoalTimeline'
 import { useAuthStore } from '../../stores/authStore'
 import { startKeycloakAuth } from '../../utils/keycloakAuth'
 
@@ -37,10 +38,12 @@ export default function Dashboard() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [goals, setGoals] = useState<Array<{id: number; name: string; currentAmount: number; targetAmount: number; monthlyContribution: number}>>([])
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchDashboardData()
+      fetchGoals()
       return
     }
 
@@ -148,6 +151,28 @@ export default function Dashboard() {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchGoals = async () => {
+    if (!token) return
+
+    try {
+      const response = await fetch('/api/goals', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const goalsData = await response.json()
+        setGoals(goalsData.map((g: any) => ({
+          id: g.id,
+          name: g.name,
+          currentAmount: g.currentAmount || g.current_amount || 0,
+          targetAmount: g.targetAmount || g.target_amount || g.targetAmount,
+          monthlyContribution: g.monthlyContribution || g.monthly_contribution || 0
+        })))
+      }
+    } catch (err) {
+      console.warn('Failed to fetch goals:', err)
     }
   }
 
@@ -269,10 +294,26 @@ export default function Dashboard() {
           </motion.div>
 
           {/* Cash Flow Forecast Chart */}
-          <CashFlowForecastChart />
+          <motion.div className="card p-5 md:col-span-2" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
+            <CashFlowForecastChart />
+          </motion.div>
 
           {/* Risk Assessment Card */}
-          <RiskAssessmentCard />
+          <motion.div className="card p-5" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
+            <RiskAssessmentCard />
+          </motion.div>
+
+          {/* Goal Timeline */}
+          {goals.length > 0 && goals.map((goal) => (
+            <motion.div key={goal.id} className="card p-5 md:col-span-3" initial={{opacity:0, y:10}} animate={{opacity:1,y:0}}>
+              <GoalTimeline
+                goalId={goal.id}
+                currentAmount={goal.currentAmount}
+                targetAmount={goal.targetAmount}
+                monthlyContribution={goal.monthlyContribution}
+              />
+            </motion.div>
+          ))}
         </div>
       </div>
 

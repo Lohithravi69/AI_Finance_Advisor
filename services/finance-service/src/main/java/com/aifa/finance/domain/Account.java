@@ -44,21 +44,25 @@ public class Account {
     private String accountNumber;
 
     @Column(name = "current_balance", nullable = false, precision = 19, scale = 2)
+    @Builder.Default
     private BigDecimal currentBalance = BigDecimal.ZERO;
 
     @Column(name = "available_balance", precision = 19, scale = 2)
     private BigDecimal availableBalance;
 
     @Column(name = "currency", nullable = false, length = 3)
+    @Builder.Default
     private String currency = "USD";
 
     @Column(name = "account_color", length = 7)
     private String accountColor;
 
     @Column(name = "is_primary", nullable = false)
+    @Builder.Default
     private Boolean isPrimary = false;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)

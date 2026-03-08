@@ -17,7 +17,8 @@ const buildState = (redirect: string, mode: AuthMode) => {
 }
 
 export const startKeycloakAuth = (mode: AuthMode, redirect = '/dashboard') => {
-  const keycloakUrl = 'http://localhost:8888'
+  // Use relative URL - nginx will proxy to Keycloak
+  const keycloakUrl = '/kc'
   const realm = 'aifa'
   const clientId = 'aifa-web'
   const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback')

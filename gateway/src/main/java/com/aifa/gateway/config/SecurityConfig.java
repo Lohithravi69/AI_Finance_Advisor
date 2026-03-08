@@ -2,6 +2,7 @@ package com.aifa.gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -17,9 +18,11 @@ public class SecurityConfig {
             .authorizeExchange(exchange -> exchange
                 .pathMatchers("/actuator/**").permitAll()
                 .pathMatchers("/api/ai/health").permitAll()
+                .pathMatchers("/api/auth/**").permitAll()
+                .pathMatchers("/api/health/**").permitAll()
                 .anyExchange().authenticated()
             )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt());
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();
     }
 }

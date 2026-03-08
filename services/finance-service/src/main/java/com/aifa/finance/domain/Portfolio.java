@@ -51,6 +51,7 @@ public class Portfolio {
     private BigDecimal totalReturnPercentage;
 
     @Column(name = "investment_count")
+    @Builder.Default
     private Integer investmentCount = 0;
 
     @Column(name = "allocation_stocks", precision = 5, scale = 2)
@@ -66,6 +67,7 @@ public class Portfolio {
     private BigDecimal allocationOther;
 
     @Column(name = "rebalance_needed")
+    @Builder.Default
     private Boolean rebalanceNeeded = false;
 
     @Column(name = "created_at", nullable = false)

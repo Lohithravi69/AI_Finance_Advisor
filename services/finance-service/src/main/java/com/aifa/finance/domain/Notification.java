@@ -40,13 +40,16 @@ public class Notification {
     private String message;
 
     @Column(name = "is_read", nullable = false)
+    @Builder.Default
     private Boolean isRead = false;
 
     @Column(name = "is_sent", nullable = false)
+    @Builder.Default
     private Boolean isSent = false;
 
     @Column(name = "priority", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private NotificationPriority priority = NotificationPriority.NORMAL;
 
     @Column(name = "reference_id")

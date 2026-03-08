@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+@SuppressWarnings("null")
 public class CategoryService {
     
     private final CategoryRepository categoryRepository;
@@ -74,7 +74,7 @@ public class CategoryService {
      * Create a new category for user
      */
     public CategoryResponse createCategory(Long userId, CategoryRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
         Category category = Category.builder()
@@ -89,7 +89,7 @@ public class CategoryService {
             .spendingThisMonth(0.0)
             .build();
         
-        Category saved = categoryRepository.save(category);
+        Category saved = Objects.requireNonNull(categoryRepository.save(category), "Saved category must not be null");
         log.info("Created category {} for user {}", saved.getName(), userId);
         
         return mapToResponse(saved);
@@ -122,7 +122,7 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long userId, Long categoryId) {
-        Category category = categoryRepository.findById(categoryId)
+        Category category = categoryRepository.findById(Objects.requireNonNull(categoryId, "categoryId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
         if (!category.getUser().getId().equals(userId)) {
@@ -136,7 +136,8 @@ public class CategoryService {
      * Update a category
      */
     public CategoryResponse updateCategory(Long userId, Long categoryId, CategoryRequest request) {
-        Category category = categoryRepository.findById(categoryId)
+        Long safeCategoryId = Objects.requireNonNull(categoryId, "categoryId must not be null");
+        Category category = categoryRepository.findById(safeCategoryId)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
         if (!category.getUser().getId().equals(userId)) {
@@ -149,7 +150,7 @@ public class CategoryService {
         category.setColor(request.color());
         category.setMonthlyBudget(request.monthlyBudget());
         
-        Category updated = categoryRepository.save(category);
+        Category updated = Objects.requireNonNull(categoryRepository.save(category), "Updated category must not be null");
         log.info("Updated category {} for user {}", categoryId, userId);
         
         return mapToResponse(updated);
@@ -159,7 +160,8 @@ public class CategoryService {
      * Delete a category
      */
     public void deleteCategory(Long userId, Long categoryId) {
-        Category category = categoryRepository.findById(categoryId)
+        Long safeCategoryId = Objects.requireNonNull(categoryId, "categoryId must not be null");
+        Category category = categoryRepository.findById(safeCategoryId)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
         if (!category.getUser().getId().equals(userId)) {
@@ -172,10 +174,10 @@ public class CategoryService {
         }
         
         // Delete associated rules
-        expenseRuleRepository.deleteByCategoryId(categoryId);
+        expenseRuleRepository.deleteByCategoryId(safeCategoryId);
         
         // Delete the category
-        categoryRepository.deleteById(categoryId);
+        categoryRepository.deleteById(safeCategoryId);
         log.info("Deleted category {} for user {}", categoryId, userId);
     }
 
@@ -206,7 +208,7 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<CategorySpendingAnalysisResponse> analyzeSpendingByCategory(Long userId) {
         List<Category> categories = categoryRepository.findActiveByUserId(userId);
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         List<Transaction> transactions = transactionRepository.findByUserOrderByTransactionDateDesc(user).stream()
             .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()))
@@ -295,7 +297,7 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     public Map<String, Double> getSpendingBreakdown(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         List<Transaction> transactions = transactionRepository.findByUserOrderByTransactionDateDesc(user).stream()
             .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()))
@@ -323,10 +325,10 @@ public class CategoryService {
      * Create or suggest an expense rule
      */
     public ExpenseRuleResponse createRule(Long userId, ExpenseRuleRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
-        Category category = categoryRepository.findById(request.categoryId())
+        Category category = categoryRepository.findById(Objects.requireNonNull(request.categoryId(), "categoryId must not be null"))
             .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
         if (!category.getUser().getId().equals(userId)) {
@@ -344,7 +346,7 @@ public class CategoryService {
             .matchCount(0L)
             .build();
         
-        ExpenseRule saved = expenseRuleRepository.save(rule);
+        ExpenseRule saved = Objects.requireNonNull(expenseRuleRepository.save(rule), "Saved expense rule must not be null");
         log.info("Created rule {} for category {} (user {})", rule.getId(), category.getId(), userId);
         
         return mapRuleToResponse(saved);
@@ -365,14 +367,15 @@ public class CategoryService {
      * Delete a rule
      */
     public void deleteRule(Long userId, Long ruleId) {
-        ExpenseRule rule = expenseRuleRepository.findById(ruleId)
+        Long safeRuleId = Objects.requireNonNull(ruleId, "ruleId must not be null");
+        ExpenseRule rule = expenseRuleRepository.findById(safeRuleId)
             .orElseThrow(() -> new ResourceNotFoundException("Rule not found"));
         
         if (!rule.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException("Rule not found for this user");
         }
         
-        expenseRuleRepository.deleteById(ruleId);
+        expenseRuleRepository.deleteById(safeRuleId);
         log.info("Deleted rule {} for user {}", ruleId, userId);
     }
 

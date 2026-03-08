@@ -46,6 +46,7 @@ public class AlertRule {
     private Notification.NotificationType notificationType;
 
     @Column(name = "is_enabled", nullable = false)
+    @Builder.Default
     private Boolean isEnabled = true;
 
     @Column(name = "frequency", length = 50)
