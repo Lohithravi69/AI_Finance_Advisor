@@ -2,7 +2,7 @@
 
 > **Status**: Phase 2.5 + 2.1 Complete ✅ | **Latest Version**: February 3, 2026
 
-A comprehensive full-stack financial management application built with **Java 21**, **Spring Boot 3.3.2**, **React 18**, and **PostgreSQL**. Features OAuth2 authentication, budget management, transaction tracking, investment portfolio, and AI-powered financial insights.
+A comprehensive full-stack financial management application built with **Java 25**, **Spring Boot 3.3.2**, **React 18**, and **PostgreSQL**. Features OAuth2 authentication, budget management, transaction tracking, investment portfolio, and AI-powered financial insights.
 
 ## 📚 Documentation
 
@@ -16,7 +16,7 @@ A comprehensive full-stack financial management application built with **Java 21
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Java 21+
+- Java 25+
 - Maven 3.9.12+
 - Node.js 16+
 - npm 8+
@@ -47,7 +47,7 @@ Frontend runs on: `http://localhost:5173`
 ## 🏗️ Architecture Overview
 
 - **Frontend**: React 18 + TypeScript 5.6 (Tailwind, Framer Motion)
-- **Backend**: Java 21 + Spring Boot 3.3.2 (REST APIs, JPA)
+- **Backend**: Java 25 + Spring Boot 3.3.2 (REST APIs, JPA)
 - **Security**: OAuth2 + JWT (Keycloak integration)
 - **Database**: PostgreSQL 16 + Flyway migrations
 - **AI Engine**: Python FastAPI (isolated microservice)
@@ -274,7 +274,7 @@ f3ca631 - Architecture documentation
 **Backend issues:**
 ```bash
 mvn clean compile      # Clear cache & rebuild
-java -version         # Check Java 21+
+java -version         # Check Java 25+
 ```
 
 **Frontend issues:**

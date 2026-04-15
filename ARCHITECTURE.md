@@ -291,7 +291,7 @@ FRONTEND:
 └─ React Hot Toast 2.4.1 (notifications)
 
 BACKEND:
-├─ Java 21 (language, via --release flag)
+├─ Java 25 (language, via --release flag)
 ├─ Spring Boot 3.3.2 (framework)
 ├─ Spring Security 6 (authentication/authorization)
 ├─ Spring Data JPA (ORM)

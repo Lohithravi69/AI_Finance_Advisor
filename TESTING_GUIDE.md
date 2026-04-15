@@ -6,7 +6,7 @@ This guide walks you through testing the refactored finance-service with databas
 ## Prerequisites
 - ✅ Docker & Docker Compose installed
 - ✅ Maven 3.9+ installed
-- ✅ Java 21+ installed
+- ✅ Java 25+ installed
 - ✅ PostgreSQL running (via docker-compose)
 - ✅ Keycloak configured (see KEYCLOAK_SETUP.md)
 
@@ -21,7 +21,7 @@ This guide walks you through testing the refactored finance-service with databas
 **Expected Output:**
 ```
 ✅ Maven found: Apache Maven 3.9.x
-✅ Java found: version "21.x"
+✅ Java found: version "25.x"
 ✅ Gateway compiled successfully
 ✅ Finance Service compiled successfully
 ```

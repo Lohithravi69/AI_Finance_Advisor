@@ -20,7 +20,7 @@ try {
     $javaVersion = java -version 2>&1 | Select-String "version"
     Write-Host "✅ Java found: $javaVersion" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Java not found. Please install Java 21+ and add to PATH." -ForegroundColor Red
+    Write-Host "❌ Java not found. Please install Java 25+ and add to PATH." -ForegroundColor Red
     exit 1
 }
 

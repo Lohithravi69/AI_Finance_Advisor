@@ -143,7 +143,7 @@ All files reviewed for:
 **Expected Result:**
 ```
 ✅ Maven found: Apache Maven 3.9.x
-✅ Java found: version "21.x"
+✅ Java found: version "25.x"
 ✅ Gateway compiled successfully
 ✅ Finance Service compiled successfully
 ```
