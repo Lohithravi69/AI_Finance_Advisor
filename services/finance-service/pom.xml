@@ -16,8 +16,8 @@
     <description>Core finance microservice</description>
 
     <properties>
-        <java.version>21</java.version>
-        <lombok.version>1.18.34</lombok.version>
+        <java.version>25</java.version>
+        <lombok.version>1.18.44</lombok.version>
     </properties>
 
     <dependencies>
